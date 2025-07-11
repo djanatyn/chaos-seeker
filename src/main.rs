@@ -26,6 +26,13 @@ mod util {
         let p1 = control_deck.joypad_mut(Player::One);
         p1.set_button(button, !p1.button(button));
     }
+
+    /// Release a button.
+    pub fn release(control_deck: &mut ControlDeck, button: JoypadBtnState) {
+        control_deck
+            .joypad_mut(Player::One)
+            .set_button(button, false);
+    }
 }
 
 /// Progress through Final Fantasy 1.
@@ -126,7 +133,7 @@ mod menu {
     }
 
     fn at_character_creation(bus: &mut Bus) -> bool {
-        bus.read(char_create::CHARACTER_SELECTED_ADDRESS) == 0x0
+        bus.read(char_create::SLOT_SELECTED_ADDRESS) == 0x0
     }
 
     /// Move cursor to new game and hit start.
@@ -152,8 +159,12 @@ mod menu {
 mod char_create {
     use super::*;
 
-    pub const CHARACTER_SELECTED_ADDRESS: u16 = 0x67;
+    pub const SLOT_SELECTED_ADDRESS: u16 = 0x67;
+    pub const CLASS_SELECTED_ADDRESS: u16 = 0x300;
+    pub const PARTY_COMPLETE_ADDRESS: u16 = 0x11;
+    pub const PARTY_COMPLETE_VALUE: u8 = 0x0;
 
+    #[derive(Debug)]
     pub enum StartingClass {
         Fighter,
         Thief,
@@ -163,9 +174,12 @@ mod char_create {
         BlackMage,
     }
 
+    use StartingClass::*;
+
+    pub const STARTING_PARTY: [StartingClass; 4] = [Fighter, BlackBelt, WhiteMage, BlackMage];
+
     impl StartingClass {
         fn selection(value: u8) -> Option<StartingClass> {
-            use StartingClass::*;
             match value {
                 0x0 => Some(Fighter),
                 0x1 => Some(Thief),
@@ -177,13 +191,19 @@ mod char_create {
             }
         }
 
-        fn current_class(bus: &mut Bus) -> Option<StartingClass> {
-            Self::selection(bus.read(CHARACTER_SELECTED_ADDRESS))
+        fn current_class(bus: &mut Bus) -> Option<Self> {
+            Self::selection(bus.read(CLASS_SELECTED_ADDRESS))
         }
     }
 
+    fn party_complete(bus: &mut Bus) -> bool {
+        bus.read(PARTY_COMPLETE_ADDRESS) == PARTY_COMPLETE_VALUE
+    }
+
     pub fn handler(state: &GameState, control_deck: &mut ControlDeck) -> GameProgress {
+        tracing::warn!("{:?}", StartingClass::current_class(control_deck.bus_mut()));
         util::screenshot(control_deck, "char_creation.png");
+
         todo!()
     }
 }
