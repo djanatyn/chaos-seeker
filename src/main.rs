@@ -17,7 +17,7 @@ mod util {
 
         if let Some(image) = image {
             let _ = image.save(&filename);
-            tracing::warn!(filename, "saved screenshot");
+            // tracing::warn!(filename, "saved screenshot");
         }
     }
 
@@ -28,7 +28,7 @@ mod util {
     }
 
     /// Release a button.
-    pub fn release(control_deck: &mut ControlDeck, button: JoypadBtnState) {
+    pub fn _release(control_deck: &mut ControlDeck, button: JoypadBtnState) {
         control_deck
             .joypad_mut(Player::One)
             .set_button(button, false);
@@ -161,10 +161,31 @@ mod char_create {
 
     pub const SLOT_SELECTED_ADDRESS: u16 = 0x67;
     pub const CLASS_SELECTED_ADDRESS: u16 = 0x300;
+
+    #[derive(Debug)]
+    pub enum Mode {
+        SelectName,
+        SelectClass,
+    }
+
+    impl Mode {
+        fn current(bus: &mut Bus) -> Option<Self> {
+            match bus.read(MODE_ADDRESS) {
+                MODE_CLASS_SELECT_VALUE => Some(Mode::SelectClass),
+                MODE_NAME_SELECT_VALUE => Some(Mode::SelectName),
+                _ => None,
+            }
+        }
+    }
+
+    pub const MODE_ADDRESS: u16 = 0x1a;
+    pub const MODE_CLASS_SELECT_VALUE: u8 = 0x8;
+    pub const MODE_NAME_SELECT_VALUE: u8 = 0x4;
+
     pub const PARTY_COMPLETE_ADDRESS: u16 = 0x11;
     pub const PARTY_COMPLETE_VALUE: u8 = 0x0;
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     pub enum StartingClass {
         Fighter,
         Thief,
@@ -176,7 +197,12 @@ mod char_create {
 
     use StartingClass::*;
 
-    pub const STARTING_PARTY: [StartingClass; 4] = [Fighter, BlackBelt, WhiteMage, BlackMage];
+    pub const STARTING_PARTY: [(StartingClass, &str); 4] = [
+        (Fighter, "LDA"),
+        (BlackBelt, "ADC"),
+        (WhiteMage, "JMP"),
+        (BlackMage, "CMP"),
+    ];
 
     impl StartingClass {
         fn selection(value: u8) -> Option<StartingClass> {
@@ -191,20 +217,72 @@ mod char_create {
             }
         }
 
+        /// Current party member slot selected class.
         fn current_class(bus: &mut Bus) -> Option<Self> {
             Self::selection(bus.read(CLASS_SELECTED_ADDRESS))
         }
+    }
+
+    pub type Character = char;
+    pub type Coordinate = u16;
+    pub type Value = u16;
+
+    // TODO: 70
+    pub const CHARACTER_MAP: [(Character, (Coordinate, Value)); 11] = [
+        ('A', (0x0000, 0x8A)),
+        ('B', (0x0001, 0x8B)),
+        ('C', (0x0002, 0x8C)),
+        ('D', (0x0003, 0x8D)),
+        ('E', (0x0004, 0x8E)),
+        ('F', (0x0005, 0x8F)),
+        ('G', (0x0006, 0x90)),
+        ('H', (0x0007, 0x91)),
+        ('I', (0x0008, 0x92)),
+        ('J', (0x0009, 0x93)),
+        ('K', (0x0100, 0x94)),
+    ];
+
+    /// Current party member slot (0x0 -> 0x4)
+    fn current_slot(bus: &mut Bus) -> Option<u8> {
+        let value = bus.read(SLOT_SELECTED_ADDRESS);
+        (0..4).contains(&value).then_some(value)
     }
 
     fn party_complete(bus: &mut Bus) -> bool {
         bus.read(PARTY_COMPLETE_ADDRESS) == PARTY_COMPLETE_VALUE
     }
 
-    pub fn handler(state: &GameState, control_deck: &mut ControlDeck) -> GameProgress {
-        tracing::warn!("{:?}", StartingClass::current_class(control_deck.bus_mut()));
-        util::screenshot(control_deck, "char_creation.png");
+    pub fn handler(_state: &GameState, control_deck: &mut ControlDeck) -> GameProgress {
+        if party_complete(control_deck.bus_mut()) {
+            util::toggle(control_deck, JoypadBtnState::START);
+            return GameProgress::Unknown;
+        }
 
-        todo!()
+        match Mode::current(control_deck.bus_mut()) {
+            Some(Mode::SelectName) => {
+                let current_class = StartingClass::current_class(control_deck.bus_mut())
+                    .expect("failed to find current class");
+                dbg!(current_class);
+            }
+            Some(Mode::SelectClass) => {
+                let slot =
+                    current_slot(control_deck.bus_mut()).expect("failed to identify party slot");
+                let (desired_class, desired_name) = &STARTING_PARTY[slot as usize];
+                let current_class = StartingClass::current_class(control_deck.bus_mut())
+                    .expect("failed to find current class");
+
+                if current_class == *desired_class {
+                    util::toggle(control_deck, JoypadBtnState::A);
+                } else {
+                    util::toggle(control_deck, JoypadBtnState::B);
+                }
+
+                dbg!(slot, desired_class, desired_name, current_class);
+            }
+            None => panic!("invalid character creation mode"),
+        }
+
+        GameProgress::CharacterCreation
     }
 }
 
