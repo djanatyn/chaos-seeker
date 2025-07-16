@@ -350,7 +350,9 @@ mod char_create {
             }
             Some(Mode::SelectClass) => {
                 let slot = current_slot(state).expect("failed to identify party slot");
-                let (desired_class, desired_name) = &STARTING_PARTY[slot as usize];
+                let (desired_class, desired_name) = STARTING_PARTY
+                    .get(slot as usize)
+                    .expect("slot out of bounds");
                 let current_class =
                     StartingClass::current_class(state).expect("failed to find current class");
 
