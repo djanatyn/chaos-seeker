@@ -371,6 +371,121 @@ mod char_create {
     }
 }
 
+mod overworld {
+    use strum::FromRepr;
+
+    /// https://datacrystal.tcrf.net/wiki/Final_Fantasy/World_map_data
+    struct OverworldMapIndex(u16);
+
+    #[derive(Debug, Clone, Copy, FromRepr)]
+    #[repr(u8)]
+    enum Tile {
+        Grass = 0x00,
+        Castle1LowerLeft = 0x01,
+        Castle1LowerRight = 0x02,
+        ForestTopLeft = 0x03,
+        ForestTop = 0x04,
+        ForestTopRight = 0x05,
+        GrassBottomRight = 0x06,
+        GrassBottom = 0x07,
+        GrassBottomLeft = 0x08,
+        Castle1TopLeft = 0x09,
+        Castle1TopRight = 0x0A,
+        // ...
+    }
+
+    type WorldMapRow = [Tile; 256];
+    type WorldMap = [WorldMapRow; 256];
+
+    #[derive(Debug)]
+    enum FSMState {
+        /// - A single byte ranging 0x00 to 0x7F describes a single tile of a
+        /// specific value.
+        Null,
+        /// A byte ranging 0x80 to 0xFE is the same as its value subtracted by
+        /// 0x80 (or exclusive-or'ed by 0x80), but the immediately following
+        /// byte indicates repetition of the tile value.
+        ///
+        /// A repetition byte value of 0x01 means no repetition, 0x0x02 means
+        /// repeat once, 0x0x03 means repeat twice, 0x04 means repeat three
+        /// times, and so on. 0x00 means to repeat 256 times, so that it can
+        /// fill an entire row. A repetition value of 0xFF is prohibited.
+        Repeat(Tile),
+        /// A byte value of 0xFF after the row's final tile terminates the row data.
+        Complete,
+    }
+
+    #[derive(Debug)]
+    struct TileFSM {
+        accum: WorldMapRow,
+        index: usize,
+        state: FSMState,
+    }
+
+    impl TileFSM {
+        fn new() -> Self {
+            TileFSM {
+                accum: [const { Tile::Grass }; 256],
+                index: 0,
+                state: FSMState::Null,
+            }
+        }
+
+        fn step(&mut self, tile: &u8) {
+            match self.state {
+                FSMState::Null => match tile {
+                    0x00..=0x7F => {
+                        // normal single tile
+                        self.accum[self.index] =
+                            Tile::from_repr(*tile).expect("failed to parse tile");
+                        self.index += 1;
+                    }
+                    0x80..=0xFE => {
+                        // start repetition
+                        let tile = Tile::from_repr(*tile - 0x80).expect("failed to parse tile");
+                        self.accum[self.index] = tile.clone();
+                        self.state = FSMState::Repeat(tile);
+                        self.index += 1;
+                    }
+                    0xFF => {
+                        // finish row
+                        self.state = FSMState::Complete;
+                    }
+                },
+                FSMState::Repeat(repeated_tile) => match tile {
+                    0 => {
+                        // fill entire row with tile
+                        self.accum = [repeated_tile; 256];
+                    }
+                    0xFF => {
+                        // invalid value
+                        panic!("prohibited value follows repeated tile");
+                    }
+                    repetitions => {
+                        // partial repeated tile
+                        let start = self.index - 1;
+                        let end = start + (*repetitions as usize);
+                        self.accum[start..end].fill(repeated_tile);
+                        self.index = end + 1;
+                        self.state = FSMState::Null;
+                    }
+                },
+                FSMState::Complete => panic!("already completed"),
+            };
+        }
+
+        fn parse_row(&mut self, row: &[u8]) -> [Tile; 256] {
+            row.iter().for_each(|tile| self.step(tile));
+
+            if let FSMState::Complete = self.state {
+                self.accum.clone()
+            } else {
+                panic!("failed to parse row")
+            }
+        }
+    }
+}
+
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_thread_names(true)
