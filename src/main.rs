@@ -547,7 +547,7 @@ mod overworld {
             }
         }
 
-        fn step(&mut self, tile: &u8) -> &FSMState {
+        fn step(&mut self, tile: &u8) -> anyhow::Result<&FSMState> {
             match self.state {
                 FSMState::Null => match tile {
                     0x00..=0x7F => {
@@ -565,14 +565,18 @@ mod overworld {
                     }
                     0xFF => {
                         // finish row
-                        self.state = FSMState::Complete;
+                        if self.index != 256 {
+                            Err(anyhow::anyhow!("early end of row"))?;
+                        } else {
+                            self.state = FSMState::Complete;
+                        }
                     }
                 },
                 FSMState::Repeat(repeated_tile) => match tile {
                     0x00 => {
                         // fill entire row with tile
                         self.accum = [repeated_tile; 256];
-                        self.index = 255;
+                        self.index = 256;
                         self.state = FSMState::Null;
                     }
                     0xFF => {
@@ -591,12 +595,12 @@ mod overworld {
                 FSMState::Complete => panic!("already completed"),
             };
 
-            &self.state
+            Ok(&self.state)
         }
 
         fn parse_row(&mut self, input: &[u8]) -> anyhow::Result<([Tile; 256], usize)> {
             for (offset, byte) in input.iter().enumerate() {
-                if let FSMState::Complete = self.step(byte) {
+                if let FSMState::Complete = self.step(byte)? {
                     return Ok((self.accum.clone(), offset + 1));
                 };
             }
