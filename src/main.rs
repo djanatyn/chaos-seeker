@@ -643,7 +643,7 @@ mod overworld {
         let rom = std::fs::read("ff1.nes")?;
         let map = TileFSM::parse_map(&rom[(0x8200 - 0x3FF0)..])?;
 
-        println!("{map:?}");
+        insta::assert_compact_debug_snapshot!(map);
 
         Ok(())
     }
