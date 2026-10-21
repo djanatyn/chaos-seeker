@@ -373,15 +373,16 @@ mod char_create {
 
 mod overworld {
     use anyhow::Context;
+    use std::collections::HashMap;
     use strum::FromRepr;
 
     /// https://datacrystal.tcrf.net/wiki/Final_Fantasy/World_map_data
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
     struct OverworldMapIndex(u16);
 
     /// 0x4010 in the ROM has 256 16-bit integers representing overworld map
     /// offsets.
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     struct WorldMapEntry {
         offset: usize,
         index: OverworldMapIndex,
@@ -412,6 +413,10 @@ mod overworld {
                 .map_err(|e| anyhow::anyhow!("did not find 256 world map entries: {e:?}"))?;
 
             Ok(WorldMapTable(table))
+        }
+
+        fn get(&self, index: usize) -> Option<WorldMapEntry> {
+            self.0.get(index).cloned()
         }
     }
 
@@ -708,6 +713,36 @@ mod overworld {
         let table = WorldMapTable::parse(&rom)?;
 
         insta::assert_compact_debug_snapshot!(table);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_all_overworld_maps() -> anyhow::Result<()> {
+        let rom = std::fs::read("ff1.nes")?;
+        let table = WorldMapTable::parse(&rom)?;
+
+        let maps: HashMap<OverworldMapIndex, WorldMapEntry> = table
+            .0
+            .iter()
+            .map(|WorldMapEntry { offset, index }| {
+                (index.clone(), WorldMapEntry::parse(&rom, *offset).unwrap())
+            })
+            .collect();
+
+        // TODO: is this deterministic?
+        // insta::assert_debug_snapshot!(maps);
+
+        let mut map_addresses: Vec<usize> = maps.values().map(|entry| entry.offset).collect();
+        map_addresses.sort();
+        map_addresses.dedup();
+
+        let all_maps: anyhow::Result<Vec<(WorldMap, usize)>> = map_addresses
+            .iter()
+            .map(|address| TileFSM::parse_map(&rom[*address..]))
+            .collect();
+
+        insta::assert_debug_snapshot!(all_maps?);
 
         Ok(())
     }
