@@ -372,6 +372,7 @@ mod char_create {
 }
 
 mod overworld {
+    use anyhow::Context;
     use strum::FromRepr;
 
     /// https://datacrystal.tcrf.net/wiki/Final_Fantasy/World_map_data
@@ -403,7 +404,14 @@ mod overworld {
     impl WorldMapTable {
         /// Parse the world map entry table from the ROM.
         fn parse(rom: &[u8]) -> anyhow::Result<Self> {
-            todo!()
+            let start_offset: usize = 0x4010;
+            let table: [WorldMapEntry; 256] = (0..256)
+                .map(|i| WorldMapEntry::parse(rom, start_offset + i))
+                .collect::<anyhow::Result<Vec<WorldMapEntry>>>()?
+                .try_into()
+                .map_err(|e| anyhow::anyhow!("did not find 256 world map entries: {e:?}"))?;
+
+            Ok(WorldMapTable(table))
         }
     }
 
@@ -690,6 +698,16 @@ mod overworld {
         };
 
         assert_eq!(parsed, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_world_map_table() -> anyhow::Result<()> {
+        let rom = std::fs::read("ff1.nes")?;
+        let table = WorldMapTable::parse(&rom)?;
+
+        insta::assert_compact_debug_snapshot!(table);
 
         Ok(())
     }
