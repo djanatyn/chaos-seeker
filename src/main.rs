@@ -375,7 +375,37 @@ mod overworld {
     use strum::FromRepr;
 
     /// https://datacrystal.tcrf.net/wiki/Final_Fantasy/World_map_data
+    #[derive(Debug, PartialEq)]
     struct OverworldMapIndex(u16);
+
+    /// 0x4010 in the ROM has 256 16-bit integers representing overworld map
+    /// offsets.
+    #[derive(Debug, PartialEq)]
+    struct WorldMapEntry {
+        offset: usize,
+        index: OverworldMapIndex,
+    }
+
+    impl WorldMapEntry {
+        fn parse(bytes: &[u8], offset: usize) -> anyhow::Result<Self> {
+            let entry_offset = u16::from_le_bytes(bytes[offset..(offset + 2)].try_into()?);
+            Ok(WorldMapEntry {
+                offset,
+                index: OverworldMapIndex(entry_offset),
+            })
+        }
+    }
+
+    /// All parsed overworld map entries.
+    #[derive(Debug)]
+    struct WorldMapTable([WorldMapEntry; 256]);
+
+    impl WorldMapTable {
+        /// Parse the world map entry table from the ROM.
+        fn parse(rom: &[u8]) -> anyhow::Result<Self> {
+            todo!()
+        }
+    }
 
     #[derive(Debug, Clone, Copy, FromRepr, PartialEq)]
     #[repr(u8)]
@@ -644,6 +674,22 @@ mod overworld {
         let map = TileFSM::parse_map(&rom[(0x8200 - 0x3FF0)..])?;
 
         insta::assert_compact_debug_snapshot!(map);
+
+        Ok(())
+    }
+
+    /// - offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+    /// 0x00004010  0082 0382 0682 0982 0c82 0f82 1282 1582  ................
+    #[test]
+    fn test_parse_world_map_entry() -> anyhow::Result<()> {
+        let bytes = [0x00, 0x82];
+        let parsed = WorldMapEntry::parse(&bytes, 0)?;
+        let expected = WorldMapEntry {
+            offset: 0,
+            index: OverworldMapIndex(0x8200),
+        };
+
+        assert_eq!(parsed, expected);
 
         Ok(())
     }
