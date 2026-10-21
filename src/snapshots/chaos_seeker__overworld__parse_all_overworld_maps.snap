@@ -1,0 +1,2046 @@
+---
+source: src/main.rs
+expression: maps
+---
+{
+    OverworldMapIndex(
+        33684,
+    ): WorldMapEntry {
+        offset: 16444,
+        index: OverworldMapIndex(
+            33684,
+        ),
+    },
+    OverworldMapIndex(
+        36280,
+    ): WorldMapEntry {
+        offset: 16500,
+        index: OverworldMapIndex(
+            36280,
+        ),
+    },
+    OverworldMapIndex(
+        36635,
+    ): WorldMapEntry {
+        offset: 16508,
+        index: OverworldMapIndex(
+            36635,
+        ),
+    },
+    OverworldMapIndex(
+        1666,
+    ): WorldMapEntry {
+        offset: 16403,
+        index: OverworldMapIndex(
+            1666,
+        ),
+    },
+    OverworldMapIndex(
+        43921,
+    ): WorldMapEntry {
+        offset: 16525,
+        index: OverworldMapIndex(
+            43921,
+        ),
+    },
+    OverworldMapIndex(
+        33764,
+    ): WorldMapEntry {
+        offset: 16446,
+        index: OverworldMapIndex(
+            33764,
+        ),
+    },
+    OverworldMapIndex(
+        36752,
+    ): WorldMapEntry {
+        offset: 16517,
+        index: OverworldMapIndex(
+            36752,
+        ),
+    },
+    OverworldMapIndex(
+        51096,
+    ): WorldMapEntry {
+        offset: 16593,
+        index: OverworldMapIndex(
+            51096,
+        ),
+    },
+    OverworldMapIndex(
+        27272,
+    ): WorldMapEntry {
+        offset: 16471,
+        index: OverworldMapIndex(
+            27272,
+        ),
+    },
+    OverworldMapIndex(
+        8578,
+    ): WorldMapEntry {
+        offset: 16421,
+        index: OverworldMapIndex(
+            8578,
+        ),
+    },
+    OverworldMapIndex(
+        54928,
+    ): WorldMapEntry {
+        offset: 16519,
+        index: OverworldMapIndex(
+            54928,
+        ),
+    },
+    OverworldMapIndex(
+        37365,
+    ): WorldMapEntry {
+        offset: 16528,
+        index: OverworldMapIndex(
+            37365,
+        ),
+    },
+    OverworldMapIndex(
+        53395,
+    ): WorldMapEntry {
+        offset: 16541,
+        index: OverworldMapIndex(
+            53395,
+        ),
+    },
+    OverworldMapIndex(
+        38090,
+    ): WorldMapEntry {
+        offset: 16552,
+        index: OverworldMapIndex(
+            38090,
+        ),
+    },
+    OverworldMapIndex(
+        23959,
+    ): WorldMapEntry {
+        offset: 16577,
+        index: OverworldMapIndex(
+            23959,
+        ),
+    },
+    OverworldMapIndex(
+        1927,
+    ): WorldMapEntry {
+        offset: 16469,
+        index: OverworldMapIndex(
+            1927,
+        ),
+    },
+    OverworldMapIndex(
+        15002,
+    ): WorldMapEntry {
+        offset: 16635,
+        index: OverworldMapIndex(
+            15002,
+        ),
+    },
+    OverworldMapIndex(
+        33310,
+    ): WorldMapEntry {
+        offset: 16420,
+        index: OverworldMapIndex(
+            33310,
+        ),
+    },
+    OverworldMapIndex(
+        14978,
+    ): WorldMapEntry {
+        offset: 16429,
+        index: OverworldMapIndex(
+            14978,
+        ),
+    },
+    OverworldMapIndex(
+        53643,
+    ): WorldMapEntry {
+        offset: 16489,
+        index: OverworldMapIndex(
+            53643,
+        ),
+    },
+    OverworldMapIndex(
+        40344,
+    ): WorldMapEntry {
+        offset: 16591,
+        index: OverworldMapIndex(
+            40344,
+        ),
+    },
+    OverworldMapIndex(
+        33326,
+    ): WorldMapEntry {
+        offset: 16428,
+        index: OverworldMapIndex(
+            33326,
+        ),
+    },
+    OverworldMapIndex(
+        38661,
+    ): WorldMapEntry {
+        offset: 16574,
+        index: OverworldMapIndex(
+            38661,
+        ),
+    },
+    OverworldMapIndex(
+        37291,
+    ): WorldMapEntry {
+        offset: 16526,
+        index: OverworldMapIndex(
+            37291,
+        ),
+    },
+    OverworldMapIndex(
+        38617,
+    ): WorldMapEntry {
+        offset: 16572,
+        index: OverworldMapIndex(
+            38617,
+        ),
+    },
+    OverworldMapIndex(
+        39165,
+    ): WorldMapEntry {
+        offset: 16598,
+        index: OverworldMapIndex(
+            39165,
+        ),
+    },
+    OverworldMapIndex(
+        38972,
+    ): WorldMapEntry {
+        offset: 16588,
+        index: OverworldMapIndex(
+            38972,
+        ),
+    },
+    OverworldMapIndex(
+        11906,
+    ): WorldMapEntry {
+        offset: 16427,
+        index: OverworldMapIndex(
+            11906,
+        ),
+    },
+    OverworldMapIndex(
+        33552,
+    ): WorldMapEntry {
+        offset: 16440,
+        index: OverworldMapIndex(
+            33552,
+        ),
+    },
+    OverworldMapIndex(
+        39388,
+    ): WorldMapEntry {
+        offset: 16626,
+        index: OverworldMapIndex(
+            39388,
+        ),
+    },
+    OverworldMapIndex(
+        1430,
+    ): WorldMapEntry {
+        offset: 16573,
+        index: OverworldMapIndex(
+            1430,
+        ),
+    },
+    OverworldMapIndex(
+        5514,
+    ): WorldMapEntry {
+        offset: 16485,
+        index: OverworldMapIndex(
+            5514,
+        ),
+    },
+    OverworldMapIndex(
+        39231,
+    ): WorldMapEntry {
+        offset: 16606,
+        index: OverworldMapIndex(
+            39231,
+        ),
+    },
+    OverworldMapIndex(
+        37679,
+    ): WorldMapEntry {
+        offset: 16536,
+        index: OverworldMapIndex(
+            37679,
+        ),
+    },
+    OverworldMapIndex(
+        5506,
+    ): WorldMapEntry {
+        offset: 16413,
+        index: OverworldMapIndex(
+            5506,
+        ),
+    },
+    OverworldMapIndex(
+        39482,
+    ): WorldMapEntry {
+        offset: 16636,
+        index: OverworldMapIndex(
+            39482,
+        ),
+    },
+    OverworldMapIndex(
+        46474,
+    ): WorldMapEntry {
+        offset: 16483,
+        index: OverworldMapIndex(
+            46474,
+        ),
+    },
+    OverworldMapIndex(
+        18842,
+    ): WorldMapEntry {
+        offset: 16637,
+        index: OverworldMapIndex(
+            18842,
+        ),
+    },
+    OverworldMapIndex(
+        36927,
+    ): WorldMapEntry {
+        offset: 16516,
+        index: OverworldMapIndex(
+            36927,
+        ),
+    },
+    OverworldMapIndex(
+        34922,
+    ): WorldMapEntry {
+        offset: 16472,
+        index: OverworldMapIndex(
+            34922,
+        ),
+    },
+    OverworldMapIndex(
+        40083,
+    ): WorldMapEntry {
+        offset: 16539,
+        index: OverworldMapIndex(
+            40083,
+        ),
+    },
+    OverworldMapIndex(
+        39019,
+    ): WorldMapEntry {
+        offset: 16590,
+        index: OverworldMapIndex(
+            39019,
+        ),
+    },
+    OverworldMapIndex(
+        4226,
+    ): WorldMapEntry {
+        offset: 16439,
+        index: OverworldMapIndex(
+            4226,
+        ),
+    },
+    OverworldMapIndex(
+        61071,
+    ): WorldMapEntry {
+        offset: 16513,
+        index: OverworldMapIndex(
+            61071,
+        ),
+    },
+    OverworldMapIndex(
+        33292,
+    ): WorldMapEntry {
+        offset: 16408,
+        index: OverworldMapIndex(
+            33292,
+        ),
+    },
+    OverworldMapIndex(
+        39657,
+    ): WorldMapEntry {
+        offset: 16652,
+        index: OverworldMapIndex(
+            39657,
+        ),
+    },
+    OverworldMapIndex(
+        38425,
+    ): WorldMapEntry {
+        offset: 16564,
+        index: OverworldMapIndex(
+            38425,
+        ),
+    },
+    OverworldMapIndex(
+        33280,
+    ): WorldMapEntry {
+        offset: 16400,
+        index: OverworldMapIndex(
+            33280,
+        ),
+    },
+    OverworldMapIndex(
+        4738,
+    ): WorldMapEntry {
+        offset: 16411,
+        index: OverworldMapIndex(
+            4738,
+        ),
+    },
+    OverworldMapIndex(
+        53124,
+    ): WorldMapEntry {
+        offset: 16451,
+        index: OverworldMapIndex(
+            53124,
+        ),
+    },
+    OverworldMapIndex(
+        1940,
+    ): WorldMapEntry {
+        offset: 16553,
+        index: OverworldMapIndex(
+            1940,
+        ),
+    },
+    OverworldMapIndex(
+        37078,
+    ): WorldMapEntry {
+        offset: 16520,
+        index: OverworldMapIndex(
+            37078,
+        ),
+    },
+    OverworldMapIndex(
+        39516,
+    ): WorldMapEntry {
+        offset: 16640,
+        index: OverworldMapIndex(
+            39516,
+        ),
+    },
+    OverworldMapIndex(
+        39316,
+    ): WorldMapEntry {
+        offset: 16549,
+        index: OverworldMapIndex(
+            39316,
+        ),
+    },
+    OverworldMapIndex(
+        36093,
+    ): WorldMapEntry {
+        offset: 16496,
+        index: OverworldMapIndex(
+            36093,
+        ),
+    },
+    OverworldMapIndex(
+        46231,
+    ): WorldMapEntry {
+        offset: 16581,
+        index: OverworldMapIndex(
+            46231,
+        ),
+    },
+    OverworldMapIndex(
+        17301,
+    ): WorldMapEntry {
+        offset: 16555,
+        index: OverworldMapIndex(
+            17301,
+        ),
+    },
+    OverworldMapIndex(
+        40076,
+    ): WorldMapEntry {
+        offset: 16493,
+        index: OverworldMapIndex(
+            40076,
+        ),
+    },
+    OverworldMapIndex(
+        19590,
+    ): WorldMapEntry {
+        offset: 16465,
+        index: OverworldMapIndex(
+            19590,
+        ),
+    },
+    OverworldMapIndex(
+        60041,
+    ): WorldMapEntry {
+        offset: 16479,
+        index: OverworldMapIndex(
+            60041,
+        ),
+    },
+    OverworldMapIndex(
+        43407,
+    ): WorldMapEntry {
+        offset: 16511,
+        index: OverworldMapIndex(
+            43407,
+        ),
+    },
+    OverworldMapIndex(
+        54170,
+    ): WorldMapEntry {
+        offset: 16649,
+        index: OverworldMapIndex(
+            54170,
+        ),
+    },
+    OverworldMapIndex(
+        12675,
+    ): WorldMapEntry {
+        offset: 16447,
+        index: OverworldMapIndex(
+            12675,
+        ),
+    },
+    OverworldMapIndex(
+        35890,
+    ): WorldMapEntry {
+        offset: 16492,
+        index: OverworldMapIndex(
+            35890,
+        ),
+    },
+    OverworldMapIndex(
+        31637,
+    ): WorldMapEntry {
+        offset: 16557,
+        index: OverworldMapIndex(
+            31637,
+        ),
+    },
+    OverworldMapIndex(
+        50830,
+    ): WorldMapEntry {
+        offset: 16505,
+        index: OverworldMapIndex(
+            50830,
+        ),
+    },
+    OverworldMapIndex(
+        7042,
+    ): WorldMapEntry {
+        offset: 16417,
+        index: OverworldMapIndex(
+            7042,
+        ),
+    },
+    OverworldMapIndex(
+        37007,
+    ): WorldMapEntry {
+        offset: 16518,
+        index: OverworldMapIndex(
+            37007,
+        ),
+    },
+    OverworldMapIndex(
+        37788,
+    ): WorldMapEntry {
+        offset: 16540,
+        index: OverworldMapIndex(
+            37788,
+        ),
+    },
+    OverworldMapIndex(
+        39142,
+    ): WorldMapEntry {
+        offset: 16596,
+        index: OverworldMapIndex(
+            39142,
+        ),
+    },
+    OverworldMapIndex(
+        8601,
+    ): WorldMapEntry {
+        offset: 16601,
+        index: OverworldMapIndex(
+            8601,
+        ),
+    },
+    OverworldMapIndex(
+        39245,
+    ): WorldMapEntry {
+        offset: 16608,
+        index: OverworldMapIndex(
+            39245,
+        ),
+    },
+    OverworldMapIndex(
+        23948,
+    ): WorldMapEntry {
+        offset: 16497,
+        index: OverworldMapIndex(
+            23948,
+        ),
+    },
+    OverworldMapIndex(
+        47245,
+    ): WorldMapEntry {
+        offset: 16499,
+        index: OverworldMapIndex(
+            47245,
+        ),
+    },
+    OverworldMapIndex(
+        37840,
+    ): WorldMapEntry {
+        offset: 16542,
+        index: OverworldMapIndex(
+            37840,
+        ),
+    },
+    OverworldMapIndex(
+        25497,
+    ): WorldMapEntry {
+        offset: 16611,
+        index: OverworldMapIndex(
+            25497,
+        ),
+    },
+    OverworldMapIndex(
+        36710,
+    ): WorldMapEntry {
+        offset: 16510,
+        index: OverworldMapIndex(
+            36710,
+        ),
+    },
+    OverworldMapIndex(
+        33307,
+    ): WorldMapEntry {
+        offset: 16418,
+        index: OverworldMapIndex(
+            33307,
+        ),
+    },
+    OverworldMapIndex(
+        35306,
+    ): WorldMapEntry {
+        offset: 16480,
+        index: OverworldMapIndex(
+            35306,
+        ),
+    },
+    OverworldMapIndex(
+        35409,
+    ): WorldMapEntry {
+        offset: 16482,
+        index: OverworldMapIndex(
+            35409,
+        ),
+    },
+    OverworldMapIndex(
+        41346,
+    ): WorldMapEntry {
+        offset: 16435,
+        index: OverworldMapIndex(
+            41346,
+        ),
+    },
+    OverworldMapIndex(
+        38019,
+    ): WorldMapEntry {
+        offset: 16443,
+        index: OverworldMapIndex(
+            38019,
+        ),
+    },
+    OverworldMapIndex(
+        27283,
+    ): WorldMapEntry {
+        offset: 16537,
+        index: OverworldMapIndex(
+            27283,
+        ),
+    },
+    OverworldMapIndex(
+        37989,
+    ): WorldMapEntry {
+        offset: 16548,
+        index: OverworldMapIndex(
+            37989,
+        ),
+    },
+    OverworldMapIndex(
+        59285,
+    ): WorldMapEntry {
+        offset: 16561,
+        index: OverworldMapIndex(
+            59285,
+        ),
+    },
+    OverworldMapIndex(
+        7054,
+    ): WorldMapEntry {
+        offset: 16507,
+        index: OverworldMapIndex(
+            7054,
+        ),
+    },
+    OverworldMapIndex(
+        33841,
+    ): WorldMapEntry {
+        offset: 16448,
+        index: OverworldMapIndex(
+            33841,
+        ),
+    },
+    OverworldMapIndex(
+        39376,
+    ): WorldMapEntry {
+        offset: 16624,
+        index: OverworldMapIndex(
+            39376,
+        ),
+    },
+    OverworldMapIndex(
+        55173,
+    ): WorldMapEntry {
+        offset: 16457,
+        index: OverworldMapIndex(
+            55173,
+        ),
+    },
+    OverworldMapIndex(
+        39460,
+    ): WorldMapEntry {
+        offset: 16634,
+        index: OverworldMapIndex(
+            39460,
+        ),
+    },
+    OverworldMapIndex(
+        33316,
+    ): WorldMapEntry {
+        offset: 16424,
+        index: OverworldMapIndex(
+            33316,
+        ),
+    },
+    OverworldMapIndex(
+        34263,
+    ): WorldMapEntry {
+        offset: 16458,
+        index: OverworldMapIndex(
+            34263,
+        ),
+    },
+    OverworldMapIndex(
+        38836,
+    ): WorldMapEntry {
+        offset: 16582,
+        index: OverworldMapIndex(
+            38836,
+        ),
+    },
+    OverworldMapIndex(
+        4505,
+    ): WorldMapEntry {
+        offset: 16631,
+        index: OverworldMapIndex(
+            4505,
+        ),
+    },
+    OverworldMapIndex(
+        33283,
+    ): WorldMapEntry {
+        offset: 16402,
+        index: OverworldMapIndex(
+            33283,
+        ),
+    },
+    OverworldMapIndex(
+        23706,
+    ): WorldMapEntry {
+        offset: 16639,
+        index: OverworldMapIndex(
+            23706,
+        ),
+    },
+    OverworldMapIndex(
+        33918,
+    ): WorldMapEntry {
+        offset: 16450,
+        index: OverworldMapIndex(
+            33918,
+        ),
+    },
+    OverworldMapIndex(
+        35977,
+    ): WorldMapEntry {
+        offset: 16477,
+        index: OverworldMapIndex(
+            35977,
+        ),
+    },
+    OverworldMapIndex(
+        39069,
+    ): WorldMapEntry {
+        offset: 16592,
+        index: OverworldMapIndex(
+            39069,
+        ),
+    },
+    OverworldMapIndex(
+        39201,
+    ): WorldMapEntry {
+        offset: 16602,
+        index: OverworldMapIndex(
+            39201,
+        ),
+    },
+    OverworldMapIndex(
+        39422,
+    ): WorldMapEntry {
+        offset: 16630,
+        index: OverworldMapIndex(
+            39422,
+        ),
+    },
+    OverworldMapIndex(
+        39404,
+    ): WorldMapEntry {
+        offset: 16628,
+        index: OverworldMapIndex(
+            39404,
+        ),
+    },
+    OverworldMapIndex(
+        4493,
+    ): WorldMapEntry {
+        offset: 16501,
+        index: OverworldMapIndex(
+            4493,
+        ),
+    },
+    OverworldMapIndex(
+        65177,
+    ): WorldMapEntry {
+        offset: 16629,
+        index: OverworldMapIndex(
+            65177,
+        ),
+    },
+    OverworldMapIndex(
+        33301,
+    ): WorldMapEntry {
+        offset: 16414,
+        index: OverworldMapIndex(
+            33301,
+        ),
+    },
+    OverworldMapIndex(
+        33157,
+    ): WorldMapEntry {
+        offset: 16455,
+        index: OverworldMapIndex(
+            33157,
+        ),
+    },
+    OverworldMapIndex(
+        34732,
+    ): WorldMapEntry {
+        offset: 16468,
+        index: OverworldMapIndex(
+            34732,
+        ),
+    },
+    OverworldMapIndex(
+        36777,
+    ): WorldMapEntry {
+        offset: 16512,
+        index: OverworldMapIndex(
+            36777,
+        ),
+    },
+    OverworldMapIndex(
+        38041,
+    ): WorldMapEntry {
+        offset: 16550,
+        index: OverworldMapIndex(
+            38041,
+        ),
+    },
+    OverworldMapIndex(
+        31382,
+    ): WorldMapEntry {
+        offset: 16567,
+        index: OverworldMapIndex(
+            31382,
+        ),
+    },
+    OverworldMapIndex(
+        38749,
+    ): WorldMapEntry {
+        offset: 16578,
+        index: OverworldMapIndex(
+            38749,
+        ),
+    },
+    OverworldMapIndex(
+        34352,
+    ): WorldMapEntry {
+        offset: 16460,
+        index: OverworldMapIndex(
+            34352,
+        ),
+    },
+    OverworldMapIndex(
+        37937,
+    ): WorldMapEntry {
+        offset: 16546,
+        index: OverworldMapIndex(
+            37937,
+        ),
+    },
+    OverworldMapIndex(
+        60038,
+    ): WorldMapEntry {
+        offset: 16463,
+        index: OverworldMapIndex(
+            60038,
+        ),
+    },
+    OverworldMapIndex(
+        19350,
+    ): WorldMapEntry {
+        offset: 16565,
+        index: OverworldMapIndex(
+            19350,
+        ),
+    },
+    OverworldMapIndex(
+        39635,
+    ): WorldMapEntry {
+        offset: 16650,
+        index: OverworldMapIndex(
+            39635,
+        ),
+    },
+    OverworldMapIndex(
+        59538,
+    ): WorldMapEntry {
+        offset: 16533,
+        index: OverworldMapIndex(
+            59538,
+        ),
+    },
+    OverworldMapIndex(
+        38151,
+    ): WorldMapEntry {
+        offset: 16554,
+        index: OverworldMapIndex(
+            38151,
+        ),
+    },
+    OverworldMapIndex(
+        22681,
+    ): WorldMapEntry {
+        offset: 16609,
+        index: OverworldMapIndex(
+            22681,
+        ),
+    },
+    OverworldMapIndex(
+        35996,
+    ): WorldMapEntry {
+        offset: 16494,
+        index: OverworldMapIndex(
+            35996,
+        ),
+    },
+    OverworldMapIndex(
+        43670,
+    ): WorldMapEntry {
+        offset: 16569,
+        index: OverworldMapIndex(
+            43670,
+        ),
+    },
+    OverworldMapIndex(
+        53401,
+    ): WorldMapEntry {
+        offset: 16623,
+        index: OverworldMapIndex(
+            53401,
+        ),
+    },
+    OverworldMapIndex(
+        36369,
+    ): WorldMapEntry {
+        offset: 16502,
+        index: OverworldMapIndex(
+            36369,
+        ),
+    },
+    OverworldMapIndex(
+        19330,
+    ): WorldMapEntry {
+        offset: 16431,
+        index: OverworldMapIndex(
+            19330,
+        ),
+    },
+    OverworldMapIndex(
+        16271,
+    ): WorldMapEntry {
+        offset: 16515,
+        index: OverworldMapIndex(
+            16271,
+        ),
+    },
+    OverworldMapIndex(
+        35124,
+    ): WorldMapEntry {
+        offset: 16476,
+        index: OverworldMapIndex(
+            35124,
+        ),
+    },
+    OverworldMapIndex(
+        38375,
+    ): WorldMapEntry {
+        offset: 16562,
+        index: OverworldMapIndex(
+            38375,
+        ),
+    },
+    OverworldMapIndex(
+        12692,
+    ): WorldMapEntry {
+        offset: 16545,
+        index: OverworldMapIndex(
+            12692,
+        ),
+    },
+    OverworldMapIndex(
+        13448,
+    ): WorldMapEntry {
+        offset: 16475,
+        index: OverworldMapIndex(
+            13448,
+        ),
+    },
+    OverworldMapIndex(
+        5271,
+    ): WorldMapEntry {
+        offset: 16585,
+        index: OverworldMapIndex(
+            5271,
+        ),
+    },
+    OverworldMapIndex(
+        37147,
+    ): WorldMapEntry {
+        offset: 16522,
+        index: OverworldMapIndex(
+            37147,
+        ),
+    },
+    OverworldMapIndex(
+        39321,
+    ): WorldMapEntry {
+        offset: 16618,
+        index: OverworldMapIndex(
+            39321,
+        ),
+    },
+    OverworldMapIndex(
+        28290,
+    ): WorldMapEntry {
+        offset: 16433,
+        index: OverworldMapIndex(
+            28290,
+        ),
+    },
+    OverworldMapIndex(
+        32388,
+    ): WorldMapEntry {
+        offset: 16449,
+        index: OverworldMapIndex(
+            32388,
+        ),
+    },
+    OverworldMapIndex(
+        55170,
+    ): WorldMapEntry {
+        offset: 16437,
+        index: OverworldMapIndex(
+            55170,
+        ),
+    },
+    OverworldMapIndex(
+        3202,
+    ): WorldMapEntry {
+        offset: 16407,
+        index: OverworldMapIndex(
+            3202,
+        ),
+    },
+    OverworldMapIndex(
+        36846,
+    ): WorldMapEntry {
+        offset: 16514,
+        index: OverworldMapIndex(
+            36846,
+        ),
+    },
+    OverworldMapIndex(
+        64920,
+    ): WorldMapEntry {
+        offset: 16597,
+        index: OverworldMapIndex(
+            64920,
+        ),
+    },
+    OverworldMapIndex(
+        39565,
+    ): WorldMapEntry {
+        offset: 16644,
+        index: OverworldMapIndex(
+            39565,
+        ),
+    },
+    OverworldMapIndex(
+        33441,
+    ): WorldMapEntry {
+        offset: 16436,
+        index: OverworldMapIndex(
+            33441,
+        ),
+    },
+    OverworldMapIndex(
+        19843,
+    ): WorldMapEntry {
+        offset: 16441,
+        index: OverworldMapIndex(
+            19843,
+        ),
+    },
+    OverworldMapIndex(
+        38802,
+    ): WorldMapEntry {
+        offset: 16531,
+        index: OverworldMapIndex(
+            38802,
+        ),
+    },
+    OverworldMapIndex(
+        39256,
+    ): WorldMapEntry {
+        offset: 16610,
+        index: OverworldMapIndex(
+            39256,
+        ),
+    },
+    OverworldMapIndex(
+        38932,
+    ): WorldMapEntry {
+        offset: 16586,
+        index: OverworldMapIndex(
+            38932,
+        ),
+    },
+    OverworldMapIndex(
+        29337,
+    ): WorldMapEntry {
+        offset: 16613,
+        index: OverworldMapIndex(
+            29337,
+        ),
+    },
+    OverworldMapIndex(
+        6274,
+    ): WorldMapEntry {
+        offset: 16415,
+        index: OverworldMapIndex(
+            6274,
+        ),
+    },
+    OverworldMapIndex(
+        59032,
+    ): WorldMapEntry {
+        offset: 16595,
+        index: OverworldMapIndex(
+            59032,
+        ),
+    },
+    OverworldMapIndex(
+        55702,
+    ): WorldMapEntry {
+        offset: 16571,
+        index: OverworldMapIndex(
+            55702,
+        ),
+    },
+    OverworldMapIndex(
+        39359,
+    ): WorldMapEntry {
+        offset: 16622,
+        index: OverworldMapIndex(
+            39359,
+        ),
+    },
+    OverworldMapIndex(
+        33286,
+    ): WorldMapEntry {
+        offset: 16404,
+        index: OverworldMapIndex(
+            33286,
+        ),
+    },
+    OverworldMapIndex(
+        59802,
+    ): WorldMapEntry {
+        offset: 16651,
+        index: OverworldMapIndex(
+            59802,
+        ),
+    },
+    OverworldMapIndex(
+        9346,
+    ): WorldMapEntry {
+        offset: 16423,
+        index: OverworldMapIndex(
+            9346,
+        ),
+    },
+    OverworldMapIndex(
+        35212,
+    ): WorldMapEntry {
+        offset: 16478,
+        index: OverworldMapIndex(
+            35212,
+        ),
+    },
+    OverworldMapIndex(
+        35694,
+    ): WorldMapEntry {
+        offset: 16488,
+        index: OverworldMapIndex(
+            35694,
+        ),
+    },
+    OverworldMapIndex(
+        28299,
+    ): WorldMapEntry {
+        offset: 16487,
+        index: OverworldMapIndex(
+            28299,
+        ),
+    },
+    OverworldMapIndex(
+        34177,
+    ): WorldMapEntry {
+        offset: 16456,
+        index: OverworldMapIndex(
+            34177,
+        ),
+    },
+    OverworldMapIndex(
+        58263,
+    ): WorldMapEntry {
+        offset: 16583,
+        index: OverworldMapIndex(
+            58263,
+        ),
+    },
+    OverworldMapIndex(
+        33613,
+    ): WorldMapEntry {
+        offset: 16442,
+        index: OverworldMapIndex(
+            33613,
+        ),
+    },
+    OverworldMapIndex(
+        44185,
+    ): WorldMapEntry {
+        offset: 16619,
+        index: OverworldMapIndex(
+            44185,
+        ),
+    },
+    OverworldMapIndex(
+        56473,
+    ): WorldMapEntry {
+        offset: 16625,
+        index: OverworldMapIndex(
+            56473,
+        ),
+    },
+    OverworldMapIndex(
+        37215,
+    ): WorldMapEntry {
+        offset: 16524,
+        index: OverworldMapIndex(
+            37215,
+        ),
+    },
+    OverworldMapIndex(
+        34449,
+    ): WorldMapEntry {
+        offset: 16462,
+        index: OverworldMapIndex(
+            34449,
+        ),
+    },
+    OverworldMapIndex(
+        39217,
+    ): WorldMapEntry {
+        offset: 16604,
+        index: OverworldMapIndex(
+            39217,
+        ),
+    },
+    OverworldMapIndex(
+        48282,
+    ): WorldMapEntry {
+        offset: 16647,
+        index: OverworldMapIndex(
+            48282,
+        ),
+    },
+    OverworldMapIndex(
+        39300,
+    ): WorldMapEntry {
+        offset: 16616,
+        index: OverworldMapIndex(
+            39300,
+        ),
+    },
+    OverworldMapIndex(
+        53640,
+    ): WorldMapEntry {
+        offset: 16473,
+        index: OverworldMapIndex(
+            53640,
+        ),
+    },
+    OverworldMapIndex(
+        37527,
+    ): WorldMapEntry {
+        offset: 16532,
+        index: OverworldMapIndex(
+            37527,
+        ),
+    },
+    OverworldMapIndex(
+        38522,
+    ): WorldMapEntry {
+        offset: 16568,
+        index: OverworldMapIndex(
+            38522,
+        ),
+    },
+    OverworldMapIndex(
+        35605,
+    ): WorldMapEntry {
+        offset: 16486,
+        index: OverworldMapIndex(
+            35605,
+        ),
+    },
+    OverworldMapIndex(
+        34636,
+    ): WorldMapEntry {
+        offset: 16466,
+        index: OverworldMapIndex(
+            34636,
+        ),
+    },
+    OverworldMapIndex(
+        64908,
+    ): WorldMapEntry {
+        offset: 16495,
+        index: OverworldMapIndex(
+            64908,
+        ),
+    },
+    OverworldMapIndex(
+        62865,
+    ): WorldMapEntry {
+        offset: 16527,
+        index: OverworldMapIndex(
+            62865,
+        ),
+    },
+    OverworldMapIndex(
+        38475,
+    ): WorldMapEntry {
+        offset: 16566,
+        index: OverworldMapIndex(
+            38475,
+        ),
+    },
+    OverworldMapIndex(
+        35223,
+    ): WorldMapEntry {
+        offset: 16579,
+        index: OverworldMapIndex(
+            35223,
+        ),
+    },
+    OverworldMapIndex(
+        39586,
+    ): WorldMapEntry {
+        offset: 16646,
+        index: OverworldMapIndex(
+            39586,
+        ),
+    },
+    OverworldMapIndex(
+        34087,
+    ): WorldMapEntry {
+        offset: 16454,
+        index: OverworldMapIndex(
+            34087,
+        ),
+    },
+    OverworldMapIndex(
+        15512,
+    ): WorldMapEntry {
+        offset: 16587,
+        index: OverworldMapIndex(
+            15512,
+        ),
+    },
+    OverworldMapIndex(
+        39612,
+    ): WorldMapEntry {
+        offset: 16648,
+        index: OverworldMapIndex(
+            39612,
+        ),
+    },
+    OverworldMapIndex(
+        6549,
+    ): WorldMapEntry {
+        offset: 16563,
+        index: OverworldMapIndex(
+            6549,
+        ),
+    },
+    OverworldMapIndex(
+        39681,
+    ): WorldMapEntry {
+        offset: 16654,
+        index: OverworldMapIndex(
+            39681,
+        ),
+    },
+    OverworldMapIndex(
+        37738,
+    ): WorldMapEntry {
+        offset: 16538,
+        index: OverworldMapIndex(
+            37738,
+        ),
+    },
+    OverworldMapIndex(
+        38320,
+    ): WorldMapEntry {
+        offset: 16560,
+        index: OverworldMapIndex(
+            38320,
+        ),
+    },
+    OverworldMapIndex(
+        37608,
+    ): WorldMapEntry {
+        offset: 16534,
+        index: OverworldMapIndex(
+            37608,
+        ),
+    },
+    OverworldMapIndex(
+        26255,
+    ): WorldMapEntry {
+        offset: 16509,
+        index: OverworldMapIndex(
+            26255,
+        ),
+    },
+    OverworldMapIndex(
+        33298,
+    ): WorldMapEntry {
+        offset: 16412,
+        index: OverworldMapIndex(
+            33298,
+        ),
+    },
+    OverworldMapIndex(
+        60569,
+    ): WorldMapEntry {
+        offset: 16627,
+        index: OverworldMapIndex(
+            60569,
+        ),
+    },
+    OverworldMapIndex(
+        10116,
+    ): WorldMapEntry {
+        offset: 16453,
+        index: OverworldMapIndex(
+            10116,
+        ),
+    },
+    OverworldMapIndex(
+        39111,
+    ): WorldMapEntry {
+        offset: 16594,
+        index: OverworldMapIndex(
+            39111,
+        ),
+    },
+    OverworldMapIndex(
+        41626,
+    ): WorldMapEntry {
+        offset: 16645,
+        index: OverworldMapIndex(
+            41626,
+        ),
+    },
+    OverworldMapIndex(
+        35793,
+    ): WorldMapEntry {
+        offset: 16490,
+        index: OverworldMapIndex(
+            35793,
+        ),
+    },
+    OverworldMapIndex(
+        38793,
+    ): WorldMapEntry {
+        offset: 16580,
+        index: OverworldMapIndex(
+            38793,
+        ),
+    },
+    OverworldMapIndex(
+        12939,
+    ): WorldMapEntry {
+        offset: 16491,
+        index: OverworldMapIndex(
+            12939,
+        ),
+    },
+    OverworldMapIndex(
+        35509,
+    ): WorldMapEntry {
+        offset: 16484,
+        index: OverworldMapIndex(
+            35509,
+        ),
+    },
+    OverworldMapIndex(
+        10114,
+    ): WorldMapEntry {
+        offset: 16425,
+        index: OverworldMapIndex(
+            10114,
+        ),
+    },
+    OverworldMapIndex(
+        12951,
+    ): WorldMapEntry {
+        offset: 16575,
+        index: OverworldMapIndex(
+            12951,
+        ),
+    },
+    OverworldMapIndex(
+        33304,
+    ): WorldMapEntry {
+        offset: 16416,
+        index: OverworldMapIndex(
+            33304,
+        ),
+    },
+    OverworldMapIndex(
+        8603,
+    ): WorldMapEntry {
+        offset: 16655,
+        index: OverworldMapIndex(
+            8603,
+        ),
+    },
+    OverworldMapIndex(
+        7056,
+    ): WorldMapEntry {
+        offset: 16521,
+        index: OverworldMapIndex(
+            7056,
+        ),
+    },
+    OverworldMapIndex(
+        27544,
+    ): WorldMapEntry {
+        offset: 16589,
+        index: OverworldMapIndex(
+            27544,
+        ),
+    },
+    OverworldMapIndex(
+        33495,
+    ): WorldMapEntry {
+        offset: 16438,
+        index: OverworldMapIndex(
+            33495,
+        ),
+    },
+    OverworldMapIndex(
+        3970,
+    ): WorldMapEntry {
+        offset: 16409,
+        index: OverworldMapIndex(
+            3970,
+        ),
+    },
+    OverworldMapIndex(
+        898,
+    ): WorldMapEntry {
+        offset: 16401,
+        index: OverworldMapIndex(
+            898,
+        ),
+    },
+    OverworldMapIndex(
+        35025,
+    ): WorldMapEntry {
+        offset: 16474,
+        index: OverworldMapIndex(
+            35025,
+        ),
+    },
+    OverworldMapIndex(
+        3992,
+    ): WorldMapEntry {
+        offset: 16599,
+        index: OverworldMapIndex(
+            3992,
+        ),
+    },
+    OverworldMapIndex(
+        39282,
+    ): WorldMapEntry {
+        offset: 16614,
+        index: OverworldMapIndex(
+            39282,
+        ),
+    },
+    OverworldMapIndex(
+        44167,
+    ): WorldMapEntry {
+        offset: 16467,
+        index: OverworldMapIndex(
+            44167,
+        ),
+    },
+    OverworldMapIndex(
+        37443,
+    ): WorldMapEntry {
+        offset: 16530,
+        index: OverworldMapIndex(
+            37443,
+        ),
+    },
+    OverworldMapIndex(
+        38211,
+    ): WorldMapEntry {
+        offset: 16556,
+        index: OverworldMapIndex(
+            38211,
+        ),
+    },
+    OverworldMapIndex(
+        12178,
+    ): WorldMapEntry {
+        offset: 16535,
+        index: OverworldMapIndex(
+            12178,
+        ),
+    },
+    OverworldMapIndex(
+        12697,
+    ): WorldMapEntry {
+        offset: 16603,
+        index: OverworldMapIndex(
+            12697,
+        ),
+    },
+    OverworldMapIndex(
+        39542,
+    ): WorldMapEntry {
+        offset: 16642,
+        index: OverworldMapIndex(
+            39542,
+        ),
+    },
+    OverworldMapIndex(
+        33999,
+    ): WorldMapEntry {
+        offset: 16452,
+        index: OverworldMapIndex(
+            33999,
+        ),
+    },
+    OverworldMapIndex(
+        9370,
+    ): WorldMapEntry {
+        offset: 16633,
+        index: OverworldMapIndex(
+            9370,
+        ),
+    },
+    OverworldMapIndex(
+        33295,
+    ): WorldMapEntry {
+        offset: 16410,
+        index: OverworldMapIndex(
+            33295,
+        ),
+    },
+    OverworldMapIndex(
+        36250,
+    ): WorldMapEntry {
+        offset: 16643,
+        index: OverworldMapIndex(
+            36250,
+        ),
+    },
+    OverworldMapIndex(
+        24465,
+    ): WorldMapEntry {
+        offset: 16523,
+        index: OverworldMapIndex(
+            24465,
+        ),
+    },
+    OverworldMapIndex(
+        38706,
+    ): WorldMapEntry {
+        offset: 16576,
+        index: OverworldMapIndex(
+            38706,
+        ),
+    },
+    OverworldMapIndex(
+        33313,
+    ): WorldMapEntry {
+        offset: 16422,
+        index: OverworldMapIndex(
+            33313,
+        ),
+    },
+    OverworldMapIndex(
+        36550,
+    ): WorldMapEntry {
+        offset: 16506,
+        index: OverworldMapIndex(
+            36550,
+        ),
+    },
+    OverworldMapIndex(
+        37892,
+    ): WorldMapEntry {
+        offset: 16544,
+        index: OverworldMapIndex(
+            37892,
+        ),
+    },
+    OverworldMapIndex(
+        33319,
+    ): WorldMapEntry {
+        offset: 16426,
+        index: OverworldMapIndex(
+            33319,
+        ),
+    },
+    OverworldMapIndex(
+        30362,
+    ): WorldMapEntry {
+        offset: 16641,
+        index: OverworldMapIndex(
+            30362,
+        ),
+    },
+    OverworldMapIndex(
+        20873,
+    ): WorldMapEntry {
+        offset: 16481,
+        index: OverworldMapIndex(
+            20873,
+        ),
+    },
+    OverworldMapIndex(
+        51860,
+    ): WorldMapEntry {
+        offset: 16551,
+        index: OverworldMapIndex(
+            51860,
+        ),
+    },
+    OverworldMapIndex(
+        34538,
+    ): WorldMapEntry {
+        offset: 16464,
+        index: OverworldMapIndex(
+            34538,
+        ),
+    },
+    OverworldMapIndex(
+        33289,
+    ): WorldMapEntry {
+        offset: 16406,
+        index: OverworldMapIndex(
+            33289,
+        ),
+    },
+    OverworldMapIndex(
+        16281,
+    ): WorldMapEntry {
+        offset: 16605,
+        index: OverworldMapIndex(
+            16281,
+        ),
+    },
+    OverworldMapIndex(
+        38570,
+    ): WorldMapEntry {
+        offset: 16570,
+        index: OverworldMapIndex(
+            38570,
+        ),
+    },
+    OverworldMapIndex(
+        39340,
+    ): WorldMapEntry {
+        offset: 16620,
+        index: OverworldMapIndex(
+            39340,
+        ),
+    },
+    OverworldMapIndex(
+        33390,
+    ): WorldMapEntry {
+        offset: 16434,
+        index: OverworldMapIndex(
+            33390,
+        ),
+    },
+    OverworldMapIndex(
+        34823,
+    ): WorldMapEntry {
+        offset: 16470,
+        index: OverworldMapIndex(
+            34823,
+        ),
+    },
+    OverworldMapIndex(
+        36189,
+    ): WorldMapEntry {
+        offset: 16498,
+        index: OverworldMapIndex(
+            36189,
+        ),
+    },
+    OverworldMapIndex(
+        45205,
+    ): WorldMapEntry {
+        offset: 16559,
+        index: OverworldMapIndex(
+            45205,
+        ),
+    },
+    OverworldMapIndex(
+        49049,
+    ): WorldMapEntry {
+        offset: 16621,
+        index: OverworldMapIndex(
+            49049,
+        ),
+    },
+    OverworldMapIndex(
+        39497,
+    ): WorldMapEntry {
+        offset: 16638,
+        index: OverworldMapIndex(
+            39497,
+        ),
+    },
+    OverworldMapIndex(
+        17297,
+    ): WorldMapEntry {
+        offset: 16529,
+        index: OverworldMapIndex(
+            17297,
+        ),
+    },
+    OverworldMapIndex(
+        39267,
+    ): WorldMapEntry {
+        offset: 16612,
+        index: OverworldMapIndex(
+            39267,
+        ),
+    },
+    OverworldMapIndex(
+        36461,
+    ): WorldMapEntry {
+        offset: 16504,
+        index: OverworldMapIndex(
+            36461,
+        ),
+    },
+    OverworldMapIndex(
+        28046,
+    ): WorldMapEntry {
+        offset: 16503,
+        index: OverworldMapIndex(
+            28046,
+        ),
+    },
+    OverworldMapIndex(
+        410,
+    ): WorldMapEntry {
+        offset: 16653,
+        index: OverworldMapIndex(
+            410,
+        ),
+    },
+    OverworldMapIndex(
+        1171,
+    ): WorldMapEntry {
+        offset: 16543,
+        index: OverworldMapIndex(
+            1171,
+        ),
+    },
+    OverworldMapIndex(
+        38267,
+    ): WorldMapEntry {
+        offset: 16558,
+        index: OverworldMapIndex(
+            38267,
+        ),
+    },
+    OverworldMapIndex(
+        58499,
+    ): WorldMapEntry {
+        offset: 16445,
+        index: OverworldMapIndex(
+            58499,
+        ),
+    },
+    OverworldMapIndex(
+        33945,
+    ): WorldMapEntry {
+        offset: 16615,
+        index: OverworldMapIndex(
+            33945,
+        ),
+    },
+    OverworldMapIndex(
+        39441,
+    ): WorldMapEntry {
+        offset: 16632,
+        index: OverworldMapIndex(
+            39441,
+        ),
+    },
+    OverworldMapIndex(
+        33355,
+    ): WorldMapEntry {
+        offset: 16432,
+        index: OverworldMapIndex(
+            33355,
+        ),
+    },
+    OverworldMapIndex(
+        12421,
+    ): WorldMapEntry {
+        offset: 16459,
+        index: OverworldMapIndex(
+            12421,
+        ),
+    },
+    OverworldMapIndex(
+        37254,
+    ): WorldMapEntry {
+        offset: 16461,
+        index: OverworldMapIndex(
+            37254,
+        ),
+    },
+    OverworldMapIndex(
+        26004,
+    ): WorldMapEntry {
+        offset: 16547,
+        index: OverworldMapIndex(
+            26004,
+        ),
+    },
+    OverworldMapIndex(
+        39183,
+    ): WorldMapEntry {
+        offset: 16600,
+        index: OverworldMapIndex(
+            39183,
+        ),
+    },
+    OverworldMapIndex(
+        19865,
+    ): WorldMapEntry {
+        offset: 16607,
+        index: OverworldMapIndex(
+            19865,
+        ),
+    },
+    OverworldMapIndex(
+        38883,
+    ): WorldMapEntry {
+        offset: 16584,
+        index: OverworldMapIndex(
+            38883,
+        ),
+    },
+    OverworldMapIndex(
+        2434,
+    ): WorldMapEntry {
+        offset: 16405,
+        index: OverworldMapIndex(
+            2434,
+        ),
+    },
+    OverworldMapIndex(
+        33338,
+    ): WorldMapEntry {
+        offset: 16430,
+        index: OverworldMapIndex(
+            33338,
+        ),
+    },
+    OverworldMapIndex(
+        7810,
+    ): WorldMapEntry {
+        offset: 16419,
+        index: OverworldMapIndex(
+            7810,
+        ),
+    },
+}
