@@ -372,15 +372,77 @@ mod char_create {
 }
 
 mod overworld {
-    /// https://datacrystal.tcrf.net/wiki/Final_Fantasy/World_map_data
+    use std::collections::HashMap;
     use strum::FromRepr;
 
-    /// Since this bank will loaded into the NES memory map at readable
-    /// address $8000, all memory pointers in the ROM must point to the
-    /// row's ROM file address + 0x3FF0. To translate a memory pointer back
-    /// into a ROM file address, you subtract 0x3FF0 instead.
-    pub const ROM_OFFSET: usize = 0x3FF0;
-    pub const OVERWORLD_MAP_OFFSET: usize = 0x8200 - ROM_OFFSET;
+    /// https://datacrystal.tcrf.net/wiki/Final_Fantasy/World_map_data
+    #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
+    struct OverworldRowOffset(usize);
+
+    #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
+    struct OverworldRowROMOffset(usize);
+
+    impl OverworldRowROMOffset {
+        /// Since this bank will loaded into the NES memory map at readable
+        /// address $8000, all memory pointers in the ROM must point to the
+        /// row's ROM file address + 0x3FF0. To translate a memory pointer back
+        /// into a ROM file address, you subtract 0x3FF0 instead.
+        pub const ROM_OFFSET: usize = 0x3FF0;
+    }
+
+    impl From<OverworldRowOffset> for OverworldRowROMOffset {
+        fn from(OverworldRowOffset(offset): OverworldRowOffset) -> Self {
+            OverworldRowROMOffset(offset - Self::ROM_OFFSET)
+        }
+    }
+
+    /// 0x4010 in the ROM has 256 16-bit integers representing overworld map
+    /// offsets.
+    #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+    struct OverworldRowPointer {
+        /// Offset of the entry in the ROM.
+        entry_offset: usize,
+        /// Index to the overworld map data the entry points to.
+        map_data_offset: OverworldRowOffset,
+    }
+
+    impl OverworldRowPointer {
+        fn parse(rom: &[u8], offset: usize) -> anyhow::Result<Self> {
+            // read two u8 bytes into LE u16
+            let entry_offset = u16::from_le_bytes(rom[offset..(offset + 2)].try_into()?);
+
+            Ok(OverworldRowPointer {
+                entry_offset: offset,
+                map_data_offset: OverworldRowOffset(entry_offset.into()),
+            })
+        }
+    }
+
+    /// All parsed overworld map entries.
+    #[derive(Debug)]
+    struct OverworldMapRowPointerTable([OverworldRowPointer; 256]);
+
+    impl OverworldMapRowPointerTable {
+        const ROW_POINTER_SIZE: usize = 2;
+
+        /// Parse the world map entry table from the ROM.
+        fn parse(rom: &[u8]) -> anyhow::Result<Self> {
+            let start_offset: usize = 0x4010;
+            let table: [OverworldRowPointer; 256] = (0..256)
+                .map(|i| {
+                    OverworldRowPointer::parse(rom, start_offset + (Self::ROW_POINTER_SIZE * i))
+                })
+                .collect::<anyhow::Result<Vec<OverworldRowPointer>>>()?
+                .try_into()
+                .map_err(|e| anyhow::anyhow!("did not find 256 world map row pointers: {e:?}"))?;
+
+            Ok(OverworldMapRowPointerTable(table))
+        }
+
+        fn get(&self, index: usize) -> Option<OverworldRowPointer> {
+            self.0.get(index).cloned()
+        }
+    }
 
     #[derive(Debug, Clone, Copy, FromRepr, PartialEq)]
     #[repr(u8)]
@@ -613,8 +675,13 @@ mod overworld {
             Err(anyhow::anyhow!("reached end of input"))?
         }
 
-        fn parse_map(rom: &[u8], map_offset: usize) -> anyhow::Result<(WorldMap, usize)> {
-            let input = &rom[map_offset..];
+        fn parse_map(
+            rom: &[u8],
+            offset: OverworldRowROMOffset,
+        ) -> anyhow::Result<(WorldMap, usize)> {
+            todo!("this function must use the world map row pointer table");
+
+            let input = &rom[(offset.0 as usize)..];
             let mut map = [[const { Tile::Grass1 }; 256]; 256];
             let mut offset = 0;
 
@@ -645,11 +712,90 @@ mod overworld {
     }
 
     #[test]
-    fn test_parse_overworld_map() -> anyhow::Result<()> {
+    fn test_parse_map() -> anyhow::Result<()> {
         let rom = std::fs::read("ff1.nes")?;
-        let map = TileFSM::parse_map(&rom, OVERWORLD_MAP_OFFSET)?;
+        let offset = 0x8200 - OverworldRowROMOffset::ROM_OFFSET;
+        let map = TileFSM::parse_map(&rom, OverworldRowROMOffset(offset))?;
 
         insta::assert_compact_debug_snapshot!(map);
+
+        Ok(())
+    }
+
+    /// - offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+    /// 0x00004010  0082 0382 0682 0982 0c82 0f82 1282 1582  ................
+    #[test]
+    fn test_parse_world_map_entry() -> anyhow::Result<()> {
+        let bytes = [0x00, 0x82];
+        let parsed = OverworldRowPointer::parse(&bytes, 0)?;
+        let expected = OverworldRowPointer {
+            entry_offset: 0,
+            map_data_offset: OverworldRowOffset(0x8200),
+        };
+
+        assert_eq!(parsed, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_world_map_table() -> anyhow::Result<()> {
+        let rom = std::fs::read("ff1.nes")?;
+        let table = OverworldMapRowPointerTable::parse(&rom)?;
+
+        insta::assert_compact_debug_snapshot!(table);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_all_overworld_maps() -> anyhow::Result<()> {
+        let rom = std::fs::read("ff1.nes")?;
+        let table = OverworldMapRowPointerTable::parse(&rom)?;
+
+        assert_eq!(
+            table.get(0),
+            Some(OverworldRowPointer {
+                entry_offset: 0x4010,
+                map_data_offset: OverworldRowOffset(0x8200),
+            })
+        );
+
+        let maps: HashMap<OverworldRowOffset, OverworldRowPointer> = table
+            .0
+            .iter()
+            .map(
+                |OverworldRowPointer {
+                     entry_offset: offset,
+                     map_data_offset: index,
+                     ..
+                 }| {
+                    (
+                        index.clone(),
+                        OverworldRowPointer::parse(&rom, *offset).unwrap(),
+                    )
+                },
+            )
+            .collect();
+
+        // stable sorted hashmap for snapshot testing
+        let mut sorted = maps.iter().collect::<Vec<_>>();
+        sorted.sort();
+        insta::assert_debug_snapshot!(sorted);
+
+        let mut map_addresses: Vec<OverworldRowROMOffset> = maps
+            .values()
+            .map(|entry| entry.map_data_offset.into())
+            .collect();
+        map_addresses.sort();
+        map_addresses.dedup();
+
+        let all_maps: anyhow::Result<Vec<(WorldMap, usize)>> = map_addresses
+            .iter()
+            .map(|address| TileFSM::parse_map(&rom, *address))
+            .collect();
+
+        insta::assert_debug_snapshot!(all_maps?);
 
         Ok(())
     }
