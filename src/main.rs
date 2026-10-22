@@ -377,23 +377,31 @@ mod overworld {
     use strum::FromRepr;
 
     /// https://datacrystal.tcrf.net/wiki/Final_Fantasy/World_map_data
-    #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+    #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
     struct OverworldMapIndex(u16);
 
     /// 0x4010 in the ROM has 256 16-bit integers representing overworld map
     /// offsets.
-    #[derive(Debug, PartialEq, Clone)]
+    #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
     struct WorldMapEntry {
         offset: usize,
         index: OverworldMapIndex,
+        rom_index: OverworldMapIndex,
     }
 
     impl WorldMapEntry {
+        /// Since this bank will loaded into the NES memory map at readable
+        /// address $8000, all memory pointers in the ROM must point to the
+        /// row's ROM file address + 0x3FF0. To translate a memory pointer back
+        /// into a ROM file address, you subtract 0x3FF0 instead.
+        pub const ROM_OFFSET: u16 = 0x3FF0;
+
         fn parse(bytes: &[u8], offset: usize) -> anyhow::Result<Self> {
             let entry_offset = u16::from_le_bytes(bytes[offset..(offset + 2)].try_into()?);
             Ok(WorldMapEntry {
                 offset,
                 index: OverworldMapIndex(entry_offset),
+                rom_index: OverworldMapIndex(entry_offset + Self::ROM_OFFSET),
             })
         }
     }
@@ -403,11 +411,15 @@ mod overworld {
     struct WorldMapTable([WorldMapEntry; 256]);
 
     impl WorldMapTable {
+        const WORLD_MAP_ENTRY_LENGTH: usize = 2;
+
         /// Parse the world map entry table from the ROM.
         fn parse(rom: &[u8]) -> anyhow::Result<Self> {
             let start_offset: usize = 0x4010;
             let table: [WorldMapEntry; 256] = (0..256)
-                .map(|i| WorldMapEntry::parse(rom, start_offset + i))
+                .map(|i| {
+                    WorldMapEntry::parse(rom, start_offset + (Self::WORLD_MAP_ENTRY_LENGTH * i))
+                })
                 .collect::<anyhow::Result<Vec<WorldMapEntry>>>()?
                 .try_into()
                 .map_err(|e| anyhow::anyhow!("did not find 256 world map entries: {e:?}"))?;
@@ -630,6 +642,7 @@ mod overworld {
                         // partial repeated tile
                         let start = self.index - 1;
                         let end = start + (*repetitions as usize);
+                        dbg!((&repetitions, &start, &end));
                         self.accum[start..end].fill(repeated_tile);
                         self.index = end;
                         self.state = FSMState::Null;
@@ -700,6 +713,7 @@ mod overworld {
         let expected = WorldMapEntry {
             offset: 0,
             index: OverworldMapIndex(0x8200),
+            rom_index: OverworldMapIndex(0x3FF0 + 0x8200),
         };
 
         assert_eq!(parsed, expected);
@@ -722,24 +736,40 @@ mod overworld {
         let rom = std::fs::read("ff1.nes")?;
         let table = WorldMapTable::parse(&rom)?;
 
+        assert_eq!(
+            table.get(0),
+            Some(WorldMapEntry {
+                offset: 0x4010,
+                index: OverworldMapIndex(0x8200),
+                rom_index: OverworldMapIndex(0x8200 + WorldMapEntry::ROM_OFFSET)
+            })
+        );
+
         let maps: HashMap<OverworldMapIndex, WorldMapEntry> = table
             .0
             .iter()
-            .map(|WorldMapEntry { offset, index }| {
+            .map(|WorldMapEntry { offset, index, .. }| {
                 (index.clone(), WorldMapEntry::parse(&rom, *offset).unwrap())
             })
             .collect();
 
-        // TODO: is this deterministic?
-        // insta::assert_debug_snapshot!(maps);
+        // stable sorted hashmap for snapshot testing
+        let mut sorted = maps.iter().collect::<Vec<_>>();
+        sorted.sort();
+        insta::assert_debug_snapshot!(sorted);
 
-        let mut map_addresses: Vec<usize> = maps.values().map(|entry| entry.offset).collect();
+        let mut map_addresses: Vec<usize> = maps
+            .values()
+            .map(|entry| entry.rom_index.0 as usize)
+            .collect();
         map_addresses.sort();
         map_addresses.dedup();
 
+        dbg!(&map_addresses);
+
         let all_maps: anyhow::Result<Vec<(WorldMap, usize)>> = map_addresses
             .iter()
-            .map(|address| TileFSM::parse_map(&rom[*address..]))
+            .map(|address| TileFSM::parse_map(&rom[*dbg!(address)..]))
             .collect();
 
         insta::assert_debug_snapshot!(all_maps?);
