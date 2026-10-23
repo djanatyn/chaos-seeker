@@ -372,6 +372,9 @@ mod char_create {
 }
 
 mod overworld {
+    use std::path::{Path, PathBuf};
+
+    use image::RgbImage;
     use strum::FromRepr;
 
     #[derive(Debug, Clone, Copy, FromRepr, PartialEq)]
@@ -507,29 +510,54 @@ mod overworld {
         VillageFenceBottomRight = 0x7F,
     }
 
+    impl Tile {
+        fn color(&self) -> [u8; 3] {
+            let value = *self as u8;
+            [
+                value.wrapping_mul(53),
+                value.wrapping_mul(97),
+                value.wrapping_mul(151),
+            ]
+        }
+    }
+
     type WorldMapRow = [Tile; 256];
-    type WorldMap = [WorldMapRow; 256];
+
+    #[derive(Debug)]
+    struct WorldMap([WorldMapRow; 256]);
+
+    impl WorldMap {
+        fn save_image(&self, path: &Path) -> anyhow::Result<()> {
+            let mut img = RgbImage::new(256, 256);
+
+            for (y, row) in self.0.iter().enumerate() {
+                for (x, tile) in row.iter().enumerate() {
+                    img.put_pixel(x as u32, y as u32, image::Rgb(tile.color()));
+                }
+            }
+
+            img.save(path)?;
+            Ok(())
+        }
+    }
 
     /// https://datacrystal.tcrf.net/wiki/Final_Fantasy/World_map_data
     #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
-    struct OverworldRowOffset(usize);
+    struct OverworldCpuAddress(u16);
 
     /// iNES ROM-relative overworld row address.
     #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
-    struct OverworldRowROMOffset(usize);
+    struct RomOffset(usize);
 
-    impl OverworldRowROMOffset {
+    impl OverworldCpuAddress {
         /// Since this bank will loaded into the NES memory map at readable
         /// address $8000, all memory pointers in the ROM must point to the
         /// row's ROM file address + 0x3FF0. To translate a memory pointer back
         /// into a ROM file address, you subtract 0x3FF0 instead.
-        pub const ROM_OFFSET: usize = 0x3FF0;
-    }
+        pub const ROM_OFFSET: u16 = 0x3FF0;
 
-    impl From<OverworldRowOffset> for OverworldRowROMOffset {
-        /// Convert bank-relative address to iNES ROM-relative address.
-        fn from(OverworldRowOffset(offset): OverworldRowOffset) -> Self {
-            OverworldRowROMOffset(offset - OverworldRowROMOffset::ROM_OFFSET)
+        fn to_rom_address(&self) -> RomOffset {
+            RomOffset((self.0 - Self::ROM_OFFSET).into())
         }
     }
 
@@ -540,7 +568,7 @@ mod overworld {
         /// Offset of the entry in the ROM.
         entry_offset: usize,
         /// Index to the overworld map data the entry points to.
-        map_data_offset: OverworldRowOffset,
+        map_data_offset: OverworldCpuAddress,
     }
 
     impl OverworldRowPointer {
@@ -550,7 +578,7 @@ mod overworld {
 
             Ok(OverworldRowPointer {
                 entry_offset: offset,
-                map_data_offset: OverworldRowOffset(entry_offset.into()),
+                map_data_offset: OverworldCpuAddress(entry_offset.into()),
             })
         }
     }
@@ -622,6 +650,11 @@ mod overworld {
             }
         }
 
+        fn reset(&mut self) {
+            self.index = 0;
+            self.state = FSMState::Null;
+        }
+
         fn step(&mut self, tile: &u8) -> anyhow::Result<&FSMState> {
             match self.state {
                 FSMState::Null => match tile {
@@ -656,7 +689,7 @@ mod overworld {
                     }
                     0xFF => {
                         // invalid value
-                        panic!("prohibited value follows repeated tile");
+                        Err(anyhow::anyhow!("prohibited value follows repeated tile"))?;
                     }
                     repetitions => {
                         // partial repeated tile
@@ -667,17 +700,14 @@ mod overworld {
                         self.state = FSMState::Null;
                     }
                 },
-                FSMState::Complete => panic!("already completed"),
+                FSMState::Complete => Err(anyhow::anyhow!("already completed"))?,
             };
 
             Ok(&self.state)
         }
 
-        fn parse_row(
-            &mut self,
-            rom: &[u8],
-            pointer: &OverworldRowROMOffset,
-        ) -> anyhow::Result<ParsedRow> {
+        fn parse_row(&mut self, rom: &[u8], pointer: &RomOffset) -> anyhow::Result<ParsedRow> {
+            self.reset();
             let input = &rom[pointer.0..];
             for (offset, byte) in input.iter().enumerate() {
                 if let FSMState::Complete = self.step(byte)? {
@@ -699,27 +729,25 @@ mod overworld {
         ) -> anyhow::Result<(WorldMap, usize)> {
             let mut map = [[const { Tile::Grass1 }; 256]; 256];
             let mut offset = 0;
+            let mut fsm = TileFSM::new();
 
             for (idx, output_row) in map.iter_mut().enumerate() {
-                let mut fsm = TileFSM::new();
-                let row_offset: OverworldRowROMOffset = table.0[idx].map_data_offset.into();
+                let row_offset: RomOffset = table.0[idx].map_data_offset.to_rom_address();
                 let parsed_row = fsm.parse_row(&rom, &row_offset)?;
                 *output_row = parsed_row.tiles;
                 offset += parsed_row.length;
             }
 
-            Ok((map, offset))
+            Ok((WorldMap(map), offset))
         }
     }
 
     #[test]
     fn test_parse_row() -> anyhow::Result<()> {
         let mut fsm = TileFSM::new();
-        let ParsedRow {
-            starting_offset,
-            length,
-            tiles,
-        } = fsm.parse_row(&[0x97, 0x00, 0xFF], &OverworldRowROMOffset(0x00))?;
+        let ParsedRow { length, tiles, .. } =
+            fsm.parse_row(&[0x97, 0x00, 0xFF], &RomOffset(0x00))?;
+
         let mut ocean = tiles.to_vec();
 
         assert_eq!(length, 3);
@@ -738,7 +766,7 @@ mod overworld {
         let parsed = OverworldRowPointer::parse(&bytes, 0)?;
         let expected = OverworldRowPointer {
             entry_offset: 0,
-            map_data_offset: OverworldRowOffset(0x8200),
+            map_data_offset: OverworldCpuAddress(0x8200),
         };
 
         assert_eq!(parsed, expected);
@@ -750,7 +778,8 @@ mod overworld {
     fn test_parse_overworld() -> anyhow::Result<()> {
         let rom = std::fs::read("ff1.nes")?;
         let table = OverworldPointerTable::parse(&rom)?;
-        let map = TileFSM::parse_map(&rom, &table);
+        let (map, length) = TileFSM::parse_map(&rom, &table)?;
+        map.save_image(&PathBuf::from("map.png"))?;
 
         insta::assert_compact_debug_snapshot!(table);
         insta::assert_compact_debug_snapshot!(map);
