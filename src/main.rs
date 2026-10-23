@@ -374,7 +374,7 @@ mod char_create {
 mod overworld {
     use std::path::{Path, PathBuf};
 
-    use image::RgbImage;
+    use image::{imageops, RgbImage};
     use strum::FromRepr;
 
     #[derive(Debug, Clone, Copy, FromRepr, PartialEq)]
@@ -514,9 +514,9 @@ mod overworld {
         fn color(&self) -> [u8; 3] {
             let value = *self as u8;
             [
-                value.wrapping_mul(53),
-                value.wrapping_mul(97),
-                value.wrapping_mul(151),
+                value.wrapping_mul(3),
+                value.wrapping_mul(5),
+                value.wrapping_mul(7),
             ]
         }
     }
@@ -536,7 +536,9 @@ mod overworld {
                 }
             }
 
-            img.save(path)?;
+            let scaled = imageops::resize(&img, 256 * 4, 256 * 4, imageops::FilterType::Nearest);
+
+            scaled.save(path)?;
             Ok(())
         }
     }
