@@ -377,6 +377,117 @@ mod overworld {
     use image::{imageops, RgbImage};
     use strum::FromRepr;
 
+    /// https://www.romhacking.net/documents/663/
+    /// (Anomie’s disassembly of Final Fantasy 1 for the NES)
+    ///
+    /// ;;; ROM offsets 000010 - 00400f
+    /// ; world map tile data
+    /// ; 2 bytes per tile:
+    /// ;  +0: bits 6-7: 01 = chime required
+    /// ;                10 = caravan required
+    /// ;                11 = use floater to raise airship
+    /// ;      bit  5:   Can dock ship here
+    /// ;      bit  4:   Forest walking effect
+    /// ;      bit  3:   Can't land airship here
+    /// ;      bit  2:   Can't move ship here
+    /// ;      bit  1:   Can't move canoe here
+    /// ;      bit  0:   Can't walk here
+    /// ;  +1: If bit 7 is set, bits 0-6 specify the teleport index
+    /// ;      Otherwise, bit 6: battle here
+    /// ;                 bits 0-1: 00 = normal battle
+    /// ;                           01 = river battle
+    /// ;                           10 = ocean battle
+    /// ;                           11 = river battle
+    /// 8000: 06 40 0e 89 0e 89 0e 40 1e 40 0e 40 0e 40 0b 42
+    #[derive(Debug)]
+    struct WorldTileProperties {
+        /// What can move onto this tile?
+        traversal: u8,
+        /// What kinds of encounters / teleports happen here?
+        encounter: u8,
+    }
+
+    /// Types of battle scenes encoded in encounter property.
+    enum BattleScene {
+        Normal,
+        River,
+        Ocean,
+    }
+
+    /// Index of a teleport encounter property.
+    struct TeleportIndex(u8);
+
+    /// Requirements for moving onto a world map tile.
+    #[derive(Debug)]
+    enum TileRequirements {
+        None,
+        Chime,
+        Floater,
+        Caravan,
+    }
+
+    impl WorldTileProperties {
+        // traversal bitmasks
+        const REQUIREMENTS: u8 = 0b1100_0000;
+        const DOCK: u8 = 0b0010_0000;
+        const FOREST: u8 = 0b0001_0000;
+        const AIRSHIP_BLOCKED: u8 = 0b0000_1000;
+        const SHIP_BLOCKED: u8 = 0b0000_0100;
+        const CANOE_BLOCKED: u8 = 0b0000_0010;
+        const WALK_BLOCKED: u8 = 0b0000_0001;
+
+        // encounter bitmasks
+        const IS_TELEPORT: u8 = 0b1000_0000;
+        const TELEPORT_INDEX: u8 = 0b0111_1111;
+        const IS_BATTLE: u8 = 0b0100_0000;
+        const BATTLE_SCENE: u8 = 0b0000_0011;
+
+        fn walk_allowed(&self) -> bool {
+            (self.traversal & Self::WALK_BLOCKED) == 0
+        }
+
+        fn canoe_allowed(&self) -> bool {
+            (self.traversal & Self::CANOE_BLOCKED) == 0
+        }
+
+        fn ship_allowed(&self) -> bool {
+            (self.traversal & Self::SHIP_BLOCKED) == 0
+        }
+
+        fn airship_allowed(&self) -> bool {
+            (self.traversal & Self::AIRSHIP_BLOCKED) == 0
+        }
+
+        fn requirements(&self) -> TileRequirements {
+            match self.traversal & Self::REQUIREMENTS {
+                0b0000_0000 => TileRequirements::None,
+                0b0100_0000 => TileRequirements::Chime,
+                0b1000_0000 => TileRequirements::Caravan,
+                0b1100_0000 => TileRequirements::Floater,
+                _ => unreachable!(),
+            }
+        }
+
+        fn teleport_index(&self) -> Option<TeleportIndex> {
+            (self.encounter & Self::IS_TELEPORT != 0)
+                .then_some(TeleportIndex(self.encounter & Self::TELEPORT_INDEX))
+        }
+
+        fn battle_scene(&self) -> Option<BattleScene> {
+            let not_teleport: bool = self.encounter & Self::IS_TELEPORT == 0;
+            let is_battle: bool = self.encounter & Self::IS_BATTLE != 0;
+            (not_teleport && is_battle).then_some(match self.encounter & Self::BATTLE_SCENE {
+                0b00 => BattleScene::Normal,
+                0b01 => BattleScene::River,
+                0b10 => BattleScene::Ocean,
+                0b11 => BattleScene::River,
+                _ => {
+                    unreachable!()
+                }
+            })
+        }
+    }
+
     #[derive(Debug, Clone, Copy, FromRepr, PartialEq)]
     #[repr(u8)]
     enum Tile {
@@ -580,7 +691,7 @@ mod overworld {
 
             Ok(OverworldRowPointer {
                 entry_offset: offset,
-                map_data_offset: OverworldCpuAddress(entry_offset.into()),
+                map_data_offset: OverworldCpuAddress(entry_offset),
             })
         }
     }
@@ -613,7 +724,7 @@ mod overworld {
 
     #[derive(Debug)]
     enum FSMState {
-        /// - A single byte ranging 0x00 to 0x7F describes a single tile of a
+        /// A single byte ranging 0x00 to 0x7F describes a single tile of a
         /// specific value.
         Null,
         /// A byte ranging 0x80 to 0xFE is the same as its value subtracted by
@@ -735,7 +846,7 @@ mod overworld {
 
             for (idx, output_row) in map.iter_mut().enumerate() {
                 let row_offset: RomOffset = table.0[idx].map_data_offset.to_rom_address();
-                let parsed_row = fsm.parse_row(&rom, &row_offset)?;
+                let parsed_row = fsm.parse_row(rom, &row_offset)?;
                 *output_row = parsed_row.tiles;
                 offset += parsed_row.length;
             }
