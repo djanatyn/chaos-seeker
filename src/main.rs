@@ -497,6 +497,16 @@ mod overworld {
                 Err(anyhow::anyhow!("failed to parse"))
             }
         }
+
+        fn color(&self) -> [u8; 3] {
+            match self {
+                tile if tile.walk_allowed() => [0, 173, 0],
+                tile if tile.canoe_allowed() => [7, 173, 189],
+                tile if tile.ship_allowed() => [96, 204, 255],
+                tile if tile.airship_allowed() => [255, 111, 32],
+                _ => [170, 170, 170],
+            }
+        }
     }
 
     /// 0x0010 -> 0x400F
@@ -509,18 +519,22 @@ mod overworld {
 
         fn load(rom: &[u8]) -> anyhow::Result<Self> {
             let start: usize = Self::WORLD_TILE_PROPERTIES_OFFSET;
-            let length: usize = Self::NUM_TILES * Self::TILE_PROPERTY_SIZE;
-
-            let table: [TileProperties; 128] = (0..length)
+            let table: [TileProperties; 128] = (0..Self::NUM_TILES)
                 .map(|idx| {
                     let offset = start + (idx * Self::TILE_PROPERTY_SIZE);
                     TileProperties::parse(rom, offset)
                 })
                 .collect::<anyhow::Result<Vec<TileProperties>>>()?
                 .try_into()
-                .map_err(|e| anyhow::anyhow!("did not find 128 world map tile properties {e:?}"))?;
+                .map_err(|e: Vec<TileProperties>| {
+                    anyhow::anyhow!("did not find 128 world map tile properties: {}", e.len())
+                })?;
 
             Ok(TilePropertyTable(table))
+        }
+
+        fn lookup(&self, tile: &Tile) -> Option<&TileProperties> {
+            self.0.get(*tile as usize)
         }
     }
 
@@ -658,13 +672,12 @@ mod overworld {
     }
 
     impl Tile {
-        fn color(&self) -> [u8; 3] {
-            let value = *self as u8;
-            [
-                value.wrapping_mul(3),
-                value.wrapping_mul(5),
-                value.wrapping_mul(7),
-            ]
+        fn color(&self, table: &TilePropertyTable) -> [u8; 3] {
+            if let Some(properties) = table.lookup(self) {
+                properties.color()
+            } else {
+                [0, 0, 0]
+            }
         }
     }
 
@@ -674,12 +687,12 @@ mod overworld {
     struct Map([MapRow; 256]);
 
     impl Map {
-        fn save_image(&self, path: &Path) -> anyhow::Result<()> {
+        fn save_image(&self, path: &Path, table: &TilePropertyTable) -> anyhow::Result<()> {
             let mut img = RgbImage::new(256, 256);
 
             for (y, row) in self.0.iter().enumerate() {
                 for (x, tile) in row.iter().enumerate() {
-                    img.put_pixel(x as u32, y as u32, image::Rgb(tile.color()));
+                    img.put_pixel(x as u32, y as u32, image::Rgb(tile.color(table)));
                 }
             }
 
@@ -923,7 +936,9 @@ mod overworld {
         let rom = std::fs::read("ff1.nes")?;
         let table = PointerTable::parse(&rom)?;
         let (map, length) = TileReader::parse_map(&rom, &table)?;
-        map.save_image(&PathBuf::from("map.png"))?;
+
+        let properties = TilePropertyTable::load(&rom)?;
+        map.save_image(&PathBuf::from("map.png"), &properties)?;
 
         insta::assert_compact_debug_snapshot!(table);
         insta::assert_compact_debug_snapshot!(map);
