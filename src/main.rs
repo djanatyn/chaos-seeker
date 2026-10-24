@@ -510,6 +510,7 @@ mod overworld {
     }
 
     /// 0x0010 -> 0x400F
+    #[derive(Debug)]
     struct TilePropertyTable([TileProperties; 128]);
 
     impl TilePropertyTable {
@@ -941,6 +942,7 @@ mod overworld {
         map.save_image(&PathBuf::from("map.png"), &properties)?;
 
         insta::assert_compact_debug_snapshot!(table);
+        insta::assert_compact_debug_snapshot!(properties);
         insta::assert_compact_debug_snapshot!(map);
 
         Ok(())
