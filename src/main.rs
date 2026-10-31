@@ -382,12 +382,6 @@ mod pathfinding {
         destination: u8,
     }
 
-    impl PathScore {
-        fn score(coord: &Coordinate) -> Self {
-            todo!()
-        }
-    }
-
     #[derive(Debug)]
     struct Path {
         postition: Coordinate,
@@ -409,6 +403,10 @@ mod pathfinding {
 
     impl PathProblem {
         fn solve(&self, map: WorldMap) -> anyhow::Result<Path> {
+            todo!()
+        }
+
+        fn score(&self, coord: &Coordinate) -> anyhow::Result<PathScore> {
             todo!()
         }
     }
