@@ -375,7 +375,6 @@ mod overworld {
     use std::path::{Path, PathBuf};
 
     use image::{imageops, RgbImage};
-    use strum::FromRepr;
 
     /// https://www.romhacking.net/documents/663/
     /// (Anomie’s disassembly of Final Fantasy 1 for the NES)
@@ -535,143 +534,12 @@ mod overworld {
         }
 
         fn lookup(&self, tile: &Tile) -> Option<&TileProperties> {
-            self.0.get(*tile as usize)
+            self.0.get(tile.0 as usize)
         }
     }
 
-    #[derive(Debug, Clone, Copy, FromRepr, PartialEq)]
-    #[repr(u8)]
-    enum Tile {
-        Grass1 = 0x00,
-        Castle1LowerLeft = 0x01,
-        Castle1LowerRight = 0x02,
-        ForestTopLeft = 0x03,
-        ForestTop = 0x04,
-        ForestTopRight = 0x05,
-        GrassBottomRight = 0x06,
-        GrassBottom = 0x07,
-        GrassBottomLeft = 0x08,
-        Castle1TopLeft = 0x09,
-        Castle1TopRight = 0x0A,
-        Castle2TopLeft = 0x0B,
-        Castle2TopRight = 0x0C,
-        TowerofIllusionTop = 0x0D,
-        Grotto1 = 0x0E,
-        DockVerticalLeft = 0x0F,
-        MountainTopLeft = 0x10,
-        MountainTop = 0x11,
-        MountainTopRight = 0x12,
-        ForestLeft = 0x13,
-        ForestBottom1 = 0x14,
-        ForestRight = 0x15,
-        GrassRight = 0x16,
-        Ocean = 0x17,
-        GrassLeft = 0x18,
-        Castle1MiddleLeft = 0x19,
-        Castle1MiddleRight = 0x1A,
-        Castle2BottomLeft = 0x1B,
-        Castle2BottomRight = 0x1C,
-        TowerofIllusionBottom = 0x1D,
-        TowerofIllusionShadow = 0x1E,
-        DockVerticalRight = 0x1F,
-        MountainLeft = 0x20,
-        Mountain = 0x21,
-        MountainRight = 0x22,
-        ForestBottomLeft = 0x23,
-        ForestBottom2 = 0x24,
-        ForestBottomRight = 0x25,
-        GrassTopRight = 0x26,
-        GrassTop = 0x27,
-        GrassTopLeft = 0x28,
-        Castle2BottomLeft1 = 0x29,
-        Castle2BottomRight1 = 0x2A,
-        Grotto2 = 0x2B,
-        VillageFenceTopLeft = 0x2C,
-        VillageFenceTop = 0x2D,
-        VillageFenceTopRight = 0x2E,
-        Grotto3 = 0x2F,
-        MountainBottomLeft = 0x30,
-        MountainBottom = 0x31,
-        Grotto4 = 0x32,
-        MountainBottomRight = 0x33,
-        Grotto5 = 0x34,
-        Grotto6 = 0x35,
-        Desert1 = 0x36,
-        Desert2 = 0x37,
-        Castle2BottomLeft2 = 0x38,
-        Castle2BottomRight2 = 0x39,
-        Grotto7 = 0x3A,
-        VillageFenceTopLeftExterior = 0x3B,
-        VillageFenceTopLeftInterior = 0x3C,
-        VillageAreaGray = 0x3D,
-        VillageFenceTopRightInterior = 0x3E,
-        VillageFenceTopRightExterior = 0x3F,
-        RiverTopLeft = 0x40,
-        RiverTopRight = 0x41,
-        DesertTopLeft = 0x42,
-        DesertTopRight = 0x43,
-        River = 0x44,
-        Desert = 0x45,
-        Waterfall = 0x46,
-        CastleRuinsTopLeft = 0x47,
-        CastleRuinsTopRight = 0x48,
-        Village1 = 0x49,
-        Village2 = 0x4A,
-        VillageFenceMiddleLeft = 0x4B,
-        Village3 = 0x4C,
-        Village4 = 0x4D,
-        Village5 = 0x4E,
-        VillageFenceMiddleRight = 0x4F,
-        RiverBottomLeft = 0x50,
-        RiverBottomRight = 0x51,
-        DesertBottomLeft = 0x52,
-        DesertBottomRight = 0x53,
-        TallGrass = 0x54,
-        Swamp = 0x55,
-        CastleRuinsBottomLeft = 0x56,
-        CastleRuinsBottomMiddleLeft = 0x57,
-        CastleRuinsBottomMiddleRight = 0x58,
-        CastleRuinsBottomRight = 0x59,
-        Village6 = 0x5A,
-        VillageFenceMiddleLeft2 = 0x5B,
-        VillageFenceBottomLeft2 = 0x5C,
-        Village7 = 0x5D,
-        VillageFenceBottomRight2 = 0x5E,
-        VillageFenceMiddleRight2 = 0x5F,
-        TallGrassTopLeft = 0x60,
-        TallGrassTopRight = 0x61,
-        SwampTopLeft = 0x62,
-        SwampTopRight = 0x63,
-        VolcanoTopLeft = 0x64,
-        VolcanoTopRight = 0x65,
-        Hole1 = 0x66,
-        Hole2 = 0x67,
-        Hole3 = 0x68,
-        Hole4 = 0x69,
-        Hole5 = 0x6A,
-        VillageFenceMiddleLeft3 = 0x6B,
-        Hole6 = 0x6C,
-        Village8 = 0x6D,
-        Hole7 = 0x6E,
-        VillageFenceMiddleRight3 = 0x6F,
-        TallGrassBottomLeft = 0x70,
-        TallGrassBottomRight = 0x71,
-        SwampBottomLeft = 0x72,
-        SwampBottomRight = 0x73,
-        VolcanoBottomLeft = 0x74,
-        VolcanoBottomRight = 0x75,
-        Grass2 = 0x76,
-        DockBottomRight = 0x77,
-        DockBottom = 0x78,
-        DockBottomLeft = 0x79,
-        DockTopLeft = 0x7A,
-        VillageFenceBottomLeft = 0x7B,
-        VillageWall1 = 0x7C,
-        VillageWall2 = 0x7D,
-        VillageWall3 = 0x7E,
-        VillageFenceBottomRight = 0x7F,
-    }
-
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    struct Tile(u8);
     impl Tile {
         fn color(&self, table: &TilePropertyTable) -> [u8; 3] {
             if let Some(properties) = table.lookup(self) {
@@ -805,7 +673,7 @@ mod overworld {
     impl TileReader {
         fn new() -> Self {
             TileReader {
-                accum: [const { Tile::Grass1 }; 256],
+                accum: [const { Tile(0) }; 256],
                 index: 0,
                 state: ReaderState::Null,
             }
@@ -821,13 +689,12 @@ mod overworld {
                 ReaderState::Null => match tile {
                     0x00..=0x7F => {
                         // normal single tile
-                        self.accum[self.index] =
-                            Tile::from_repr(*tile).expect("failed to parse tile");
+                        self.accum[self.index] = Tile(*tile);
                         self.index += 1;
                     }
                     0x80..=0xFE => {
                         // start repetition
-                        let tile = Tile::from_repr(*tile - 0x80).expect("failed to parse tile");
+                        let tile = Tile(*tile - 0x80);
                         self.accum[self.index] = tile;
                         self.state = ReaderState::Repeat(tile);
                         self.index += 1;
@@ -885,18 +752,18 @@ mod overworld {
         }
 
         fn parse_map(rom: &[u8], table: &PointerTable) -> anyhow::Result<(Map, usize)> {
-            let mut map = [[const { Tile::Grass1 }; 256]; 256];
-            let mut offset = 0;
+            let mut map = [[const { Tile(1) }; 256]; 256];
+            let mut length = 0;
             let mut fsm = TileReader::new();
 
             for (idx, output_row) in map.iter_mut().enumerate() {
                 let row_offset: RomOffset = table.0[idx].map_data_offset.to_rom_address();
                 let parsed_row = fsm.parse_row(rom, &row_offset)?;
                 *output_row = parsed_row.tiles;
-                offset += parsed_row.length;
+                length += parsed_row.length;
             }
 
-            Ok((Map(map), offset))
+            Ok((Map(map), length))
         }
     }
 
@@ -911,7 +778,7 @@ mod overworld {
         assert_eq!(length, 3);
         assert_eq!(ocean.len(), 256);
         ocean.dedup();
-        assert_eq!(&ocean, &[Tile::Ocean]);
+        assert_eq!(&ocean, &[Tile(0x17)]);
 
         Ok(())
     }
@@ -942,6 +809,7 @@ mod overworld {
         map.save_image(&PathBuf::from("map.png"), &properties)?;
 
         insta::assert_compact_debug_snapshot!(table);
+        insta::assert_snapshot!(length);
         insta::assert_compact_debug_snapshot!(properties);
         insta::assert_compact_debug_snapshot!(map);
 
