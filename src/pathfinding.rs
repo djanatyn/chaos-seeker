@@ -40,7 +40,7 @@ impl Ord for SearchTile {
 }
 
 impl PathProblem<'_> {
-    fn solve(&self) -> anyhow::Result<()> {
+    fn solve(&self) -> anyhow::Result<Vec<Coordinate>> {
         let mut frontier: BinaryHeap<SearchTile> = BinaryHeap::from([SearchTile {
             coordinate: self.starting_tile,
             cost: 0,
@@ -51,7 +51,18 @@ impl PathProblem<'_> {
 
         while let Some(current) = frontier.pop() {
             if current.coordinate == self.desired_tile {
-                todo!("found path")
+                let mut path = vec![self.desired_tile];
+                let mut current = self.desired_tile;
+
+                while current != self.starting_tile {
+                    current = *history
+                        .get(&current)
+                        .ok_or_else(|| anyhow::anyhow!("broken path"))?;
+                    path.push(current);
+                }
+
+                path.reverse();
+                return Ok(path);
             }
 
             for next in self.neighbors(&current.coordinate) {
@@ -74,7 +85,7 @@ impl PathProblem<'_> {
             }
         }
 
-        todo!()
+        Err(anyhow::anyhow!("no path found"))
     }
 
     fn distance_cost(start: &Coordinate, end: &Coordinate) -> u32 {
