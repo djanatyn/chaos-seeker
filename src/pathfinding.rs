@@ -1,4 +1,4 @@
-use crate::overworld::WorldMap;
+use crate::overworld::{TileProperties, WorldMap};
 
 use std::{
     cmp::Ordering,
@@ -9,10 +9,18 @@ use std::{
 type Coordinate = (u8, u8); // (x, y)
 
 #[derive(Debug)]
+pub struct TravelCapabilities {
+    pub canoe: bool,
+    pub ship: bool,
+    pub airship: bool,
+}
+
+#[derive(Debug)]
 struct PathProblem<'a> {
     starting_tile: Coordinate,
     goal_tile: Coordinate,
     map: &'a WorldMap,
+    capabilities: TravelCapabilities,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -100,6 +108,16 @@ impl PathProblem<'_> {
         Self::distance_cost(coordinate, &self.goal_tile)
     }
 
+    fn valid_tile(&self, properties: &TileProperties) -> bool {
+        match properties {
+            p if p.walk_allowed() => true,
+            p if p.canoe_allowed() && self.capabilities.canoe => true,
+            p if p.ship_allowed() && self.capabilities.ship => true,
+            p if p.airship_allowed() && self.capabilities.airship => true,
+            _ => false,
+        }
+    }
+
     fn neighbors(&self, coordinate: &Coordinate) -> impl Iterator<Item = Coordinate> {
         const DIRECTIONS: [(isize, isize); 4] = [
             (1, 0),  // right
@@ -124,7 +142,7 @@ impl PathProblem<'_> {
             self.map
                 .get(index)
                 .and_then(|tile| self.map.lookup(tile))
-                .filter(|properties| properties.walk_allowed())
+                .filter(|properties| self.valid_tile(properties))
                 .map(|_| neighbor)
         })
     }
@@ -135,20 +153,71 @@ fn test_pathfinding() -> anyhow::Result<()> {
     let rom = std::fs::read("ff1.nes")?;
     let map = WorldMap::parse(&rom)?;
 
-    let solution = PathProblem {
-        starting_tile: (153, 167),
-        goal_tile: (125, 121),
-        map: &map,
+    {
+        let solution = PathProblem {
+            starting_tile: (153, 167),
+            goal_tile: (125, 121),
+            map: &map,
+            capabilities: TravelCapabilities {
+                canoe: false,
+                ship: false,
+                airship: false,
+            },
+        }
+        .solve()?;
+
+        insta::assert_debug_snapshot!(solution);
+
+        map.map.save_pathfinding_image(
+            &solution,
+            &PathBuf::from("pathfinding_01.png"),
+            &map.properties,
+        )?;
     }
-    .solve()?;
 
-    insta::assert_debug_snapshot!(solution);
+    {
+        let solution = PathProblem {
+            starting_tile: (154, 150),
+            goal_tile: (199, 185),
+            map: &map,
+            capabilities: TravelCapabilities {
+                canoe: true,
+                ship: false,
+                airship: true,
+            },
+        }
+        .solve()?;
 
-    map.map.save_pathfinding_image(
-        &solution,
-        &PathBuf::from("pathfinding.png"),
-        &map.properties,
-    )?;
+        insta::assert_debug_snapshot!(solution);
+
+        map.map.save_pathfinding_image(
+            &solution,
+            &PathBuf::from("pathfinding_02.png"),
+            &map.properties,
+        )?;
+    }
+
+    {
+        let solution = PathProblem {
+            starting_tile: (107, 232),
+            goal_tile: (188, 203),
+            map: &map,
+            capabilities: TravelCapabilities {
+                canoe: true,
+                ship: false,
+                airship: true,
+            },
+        }
+        .solve()?;
+
+        insta::assert_debug_snapshot!(solution);
+
+        map.map.save_pathfinding_image(
+            &solution,
+            &PathBuf::from("pathfinding_03.png"),
+            &map.properties,
+        )?;
+    }
 
     Ok(())
 }
