@@ -19,9 +19,9 @@ struct SearchTile {
     /// Coordinate of tile.
     coordinate: Coordinate,
     /// Actual distance from starting tile.
-    cost: u8,
-    /// Estimated distance to goal tile.
-    heuristic: u8,
+    cost: u32,
+    /// Cost + estimated distance to goal tile.
+    priority: u32,
 }
 
 impl PartialOrd for SearchTile {
@@ -33,8 +33,8 @@ impl PartialOrd for SearchTile {
 impl Ord for SearchTile {
     fn cmp(&self, other: &Self) -> Ordering {
         other
-            .heuristic
-            .cmp(&self.heuristic)
+            .priority
+            .cmp(&self.priority)
             .then_with(|| self.cost.cmp(&other.cost))
     }
 }
@@ -44,11 +44,10 @@ impl PathProblem<'_> {
         let mut frontier: BinaryHeap<SearchTile> = BinaryHeap::from([SearchTile {
             coordinate: self.starting_tile,
             cost: 0,
-            heuristic: self.heuristic(&self.desired_tile),
+            priority: self.heuristic(&self.starting_tile),
         }]);
-        let mut reached: HashSet<Coordinate> = HashSet::new();
         let mut history: HashMap<Coordinate, Coordinate> = HashMap::new();
-        let mut cost: HashMap<Coordinate, u8> = HashMap::new();
+        let mut cost: HashMap<Coordinate, u32> = HashMap::from([(self.starting_tile, 0)]);
 
         while let Some(current) = frontier.pop() {
             if current.coordinate == self.desired_tile {
@@ -58,18 +57,31 @@ impl PathProblem<'_> {
             for next in self.neighbors(&current.coordinate) {
                 let new_cost =
                     cost[&current.coordinate] + Self::distance_cost(&current.coordinate, &next);
-                todo!()
+                if cost
+                    .get(&next)
+                    .is_none_or(|known_cost| new_cost < *known_cost)
+                {
+                    cost.insert(next, new_cost);
+                    history.insert(next, current.coordinate);
+
+                    let priority = new_cost + self.heuristic(&next);
+                    frontier.push(SearchTile {
+                        coordinate: next,
+                        cost: new_cost,
+                        priority,
+                    });
+                }
             }
         }
 
         todo!()
     }
 
-    fn distance_cost(start: &Coordinate, end: &Coordinate) -> u8 {
-        start.0.abs_diff(end.0) + end.1.abs_diff(end.1)
+    fn distance_cost(start: &Coordinate, end: &Coordinate) -> u32 {
+        (start.0.abs_diff(end.0) + start.1.abs_diff(end.1)) as u32
     }
 
-    fn heuristic(&self, coordinate: &Coordinate) -> u8 {
+    fn heuristic(&self, coordinate: &Coordinate) -> u32 {
         todo!()
     }
 
