@@ -4,11 +4,19 @@ use image::{imageops, RgbImage};
 
 #[derive(Debug)]
 pub struct WorldMap {
-    map: Map,
-    properties: TilePropertyTable,
+    pub map: Map,
+    pub properties: TilePropertyTable,
 }
 
 impl WorldMap {
+    pub fn parse(rom: &[u8]) -> anyhow::Result<Self> {
+        let table = PointerTable::parse(&rom)?;
+        let (map, length) = TileReader::parse_map(&rom, &table)?;
+        let properties = TilePropertyTable::load(&rom)?;
+
+        Ok(WorldMap { map, properties })
+    }
+
     pub fn get(&self, (x, y): (usize, usize)) -> Option<&Tile> {
         self.map.0.get(y).and_then(|row| row.get(x))
     }
@@ -152,7 +160,7 @@ impl TileProperties {
 
 /// 0x0010 -> 0x400F
 #[derive(Debug)]
-struct TilePropertyTable([TileProperties; 128]);
+pub struct TilePropertyTable([TileProperties; 128]);
 
 impl TilePropertyTable {
     const WORLD_TILE_PROPERTIES_OFFSET: usize = 0x0010;
@@ -195,10 +203,10 @@ impl Tile {
 type MapRow = [Tile; 256];
 
 #[derive(Debug)]
-struct Map([MapRow; 256]);
+pub struct Map([MapRow; 256]);
 
 impl Map {
-    fn save_image(&self, path: &Path, table: &TilePropertyTable) -> anyhow::Result<()> {
+    pub fn save_image(&self, path: &Path, table: &TilePropertyTable) -> anyhow::Result<()> {
         let mut img = RgbImage::new(256, 256);
 
         for (y, row) in self.0.iter().enumerate() {
@@ -207,9 +215,35 @@ impl Map {
             }
         }
 
-        let scaled = imageops::resize(&img, 256 * 4, 256 * 4, imageops::FilterType::Nearest);
+        // let scaled = imageops::resize(&img, 256 * 4, 256 * 4, imageops::FilterType::Nearest);
+        // scaled.save(path)?;
+        img.save(path)?;
 
-        scaled.save(path)?;
+        Ok(())
+    }
+
+    pub fn save_pathfinding_image(
+        &self,
+        solution: Vec<(u8, u8)>,
+        path: &Path,
+        table: &TilePropertyTable,
+    ) -> anyhow::Result<()> {
+        let mut img = RgbImage::new(256, 256);
+
+        for (y, row) in self.0.iter().enumerate() {
+            for (x, tile) in row.iter().enumerate() {
+                img.put_pixel(x as u32, y as u32, image::Rgb(tile.color(table)));
+            }
+        }
+
+        for (x, y) in solution {
+            img.put_pixel(x as u32, y as u32, image::Rgb([0, 255, 0]))
+        }
+
+        // let scaled = imageops::resize(&img, 256 * 4, 256 * 4, imageops::FilterType::Nearest);
+        // scaled.save(path)?;
+        img.save(path)?;
+
         Ok(())
     }
 }

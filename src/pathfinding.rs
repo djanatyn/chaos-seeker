@@ -3,6 +3,7 @@ use crate::overworld::WorldMap;
 use std::{
     cmp::Ordering,
     collections::{BinaryHeap, HashMap},
+    path::PathBuf,
 };
 
 type Coordinate = (u8, u8); // (x, y)
@@ -127,4 +128,24 @@ impl PathProblem<'_> {
                 .map(|_| neighbor)
         })
     }
+}
+
+#[test]
+fn test_pathfinding() -> anyhow::Result<()> {
+    let rom = std::fs::read("ff1.nes")?;
+    let map = WorldMap::parse(&rom)?;
+
+    let problem = PathProblem {
+        starting_tile: (153, 167),
+        goal_tile: (125, 121),
+        map: &map,
+    };
+
+    let solution = problem.solve()?;
+    insta::assert_debug_snapshot!(solution);
+
+    map.map
+        .save_pathfinding_image(solution, &PathBuf::from("pathfinding.png"), &map.properties)?;
+
+    Ok(())
 }
