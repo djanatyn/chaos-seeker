@@ -236,17 +236,12 @@ impl Map {
             }
         }
 
-        for (idx, (x, y)) in solution.into_iter().enumerate() {
-            img.put_pixel(
-                *x as u32,
-                *y as u32,
-                // TODO: hack
-                image::Rgb([
-                    (idx * 2).try_into().expect("failed to convert color"),
-                    255,
-                    (idx * 2).try_into().expect("failed to convert color"),
-                ]),
-            )
+        let last = solution.len().saturating_sub(1).max(1);
+
+        for (idx, &(x, y)) in solution.iter().enumerate() {
+            let t = (idx as u32 * 255 / last as u32) as u8;
+            let color = image::Rgb([t, 255 - t, 255]);
+            img.put_pixel(x as u32, y as u32, color);
         }
 
         let scaled = imageops::resize(&img, 256 * 4, 256 * 4, imageops::FilterType::Nearest);
