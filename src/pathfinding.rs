@@ -144,8 +144,11 @@ fn test_pathfinding() -> anyhow::Result<()> {
 
     insta::assert_debug_snapshot!(solution);
 
-    map.map
-        .save_pathfinding_image(solution, &PathBuf::from("pathfinding.png"), &map.properties)?;
+    map.map.save_pathfinding_image(
+        &solution,
+        &PathBuf::from("pathfinding.png"),
+        &map.properties,
+    )?;
 
     Ok(())
 }
