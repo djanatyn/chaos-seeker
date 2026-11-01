@@ -9,11 +9,11 @@ pub struct WorldMap {
 }
 
 impl WorldMap {
-    fn get(&self, (x, y): (usize, usize)) -> Option<&Tile> {
-        self.map.0.get(x).and_then(|row| row.get(y))
+    pub fn get(&self, (x, y): (usize, usize)) -> Option<&Tile> {
+        self.map.0.get(y).and_then(|row| row.get(x))
     }
 
-    fn lookup(&self, tile: &Tile) -> Option<&TileProperties> {
+    pub fn lookup(&self, tile: &Tile) -> Option<&TileProperties> {
         self.properties.lookup(tile)
     }
 }
@@ -41,7 +41,7 @@ impl WorldMap {
 /// ;                           11 = river battle
 /// 8000: 06 40 0e 89 0e 89 0e 40 1e 40 0e 40 0e 40 0b 42
 #[derive(Debug)]
-struct TileProperties {
+pub struct TileProperties {
     /// What can move onto this tile?
     traversal: u8,
     /// What kinds of encounters / teleports happen here?
@@ -83,23 +83,23 @@ impl TileProperties {
     const IS_BATTLE: u8 = 0b0100_0000;
     const BATTLE_SCENE: u8 = 0b0000_0011;
 
-    fn walk_allowed(&self) -> bool {
+    pub fn walk_allowed(&self) -> bool {
         (self.traversal & Self::WALK_BLOCKED) == 0
     }
 
-    fn canoe_allowed(&self) -> bool {
+    pub fn canoe_allowed(&self) -> bool {
         (self.traversal & Self::CANOE_BLOCKED) == 0
     }
 
-    fn ship_allowed(&self) -> bool {
+    pub fn ship_allowed(&self) -> bool {
         (self.traversal & Self::SHIP_BLOCKED) == 0
     }
 
-    fn airship_allowed(&self) -> bool {
+    pub fn airship_allowed(&self) -> bool {
         (self.traversal & Self::AIRSHIP_BLOCKED) == 0
     }
 
-    fn requirements(&self) -> TileRequirements {
+    pub fn requirements(&self) -> TileRequirements {
         match self.traversal & Self::REQUIREMENTS {
             0b0000_0000 => TileRequirements::None,
             0b0100_0000 => TileRequirements::Chime,
@@ -109,12 +109,12 @@ impl TileProperties {
         }
     }
 
-    fn teleport_index(&self) -> Option<TeleportIndex> {
+    pub fn teleport_index(&self) -> Option<TeleportIndex> {
         (self.encounter & Self::IS_TELEPORT != 0)
             .then_some(TeleportIndex(self.encounter & Self::TELEPORT_INDEX))
     }
 
-    fn battle_scene(&self) -> Option<BattleScene> {
+    pub fn battle_scene(&self) -> Option<BattleScene> {
         let not_teleport: bool = self.encounter & Self::IS_TELEPORT == 0;
         let is_battle: bool = self.encounter & Self::IS_BATTLE != 0;
         (not_teleport && is_battle).then_some(match self.encounter & Self::BATTLE_SCENE {
@@ -181,7 +181,7 @@ impl TilePropertyTable {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct Tile(u8);
+pub struct Tile(u8);
 impl Tile {
     fn color(&self, table: &TilePropertyTable) -> [u8; 3] {
         if let Some(properties) = table.lookup(self) {

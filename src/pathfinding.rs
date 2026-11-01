@@ -2,7 +2,7 @@ use crate::overworld::WorldMap;
 
 use std::{
     cmp::Ordering,
-    collections::{BinaryHeap, HashMap, HashSet},
+    collections::{BinaryHeap, HashMap},
 };
 
 type Coordinate = (u8, u8); // (x, y)
@@ -10,7 +10,7 @@ type Coordinate = (u8, u8); // (x, y)
 #[derive(Debug)]
 struct PathProblem<'a> {
     starting_tile: Coordinate,
-    desired_tile: Coordinate,
+    goal_tile: Coordinate,
     map: &'a WorldMap,
 }
 
@@ -50,9 +50,13 @@ impl PathProblem<'_> {
         let mut cost: HashMap<Coordinate, u32> = HashMap::from([(self.starting_tile, 0)]);
 
         while let Some(current) = frontier.pop() {
-            if current.coordinate == self.desired_tile {
-                let mut path = vec![self.desired_tile];
-                let mut current = self.desired_tile;
+            if current.cost != cost[&current.coordinate] {
+                continue;
+            }
+
+            if current.coordinate == self.goal_tile {
+                let mut path = vec![self.goal_tile];
+                let mut current = self.goal_tile;
 
                 while current != self.starting_tile {
                     current = *history
@@ -66,8 +70,7 @@ impl PathProblem<'_> {
             }
 
             for next in self.neighbors(&current.coordinate) {
-                let new_cost =
-                    cost[&current.coordinate] + Self::distance_cost(&current.coordinate, &next);
+                let new_cost = current.cost + Self::distance_cost(&current.coordinate, &next);
                 if cost
                     .get(&next)
                     .is_none_or(|known_cost| new_cost < *known_cost)
@@ -89,14 +92,39 @@ impl PathProblem<'_> {
     }
 
     fn distance_cost(start: &Coordinate, end: &Coordinate) -> u32 {
-        (start.0.abs_diff(end.0) + start.1.abs_diff(end.1)) as u32
+        u32::from(start.0.abs_diff(end.0)) + u32::from(start.1.abs_diff(end.1))
     }
 
     fn heuristic(&self, coordinate: &Coordinate) -> u32 {
-        todo!()
+        Self::distance_cost(coordinate, &self.goal_tile)
     }
 
     fn neighbors(&self, coordinate: &Coordinate) -> impl Iterator<Item = Coordinate> {
-        std::iter::repeat((0, 0)) // TODO
+        const DIRECTIONS: [(isize, isize); 4] = [
+            (1, 0),  // right
+            (-1, 0), // left
+            (0, -1), // up
+            (0, 1),  // down
+        ];
+
+        let x = coordinate.0 as isize;
+        let y = coordinate.1 as isize;
+
+        DIRECTIONS.into_iter().filter_map(move |(dx, dy)| {
+            let nx = x + dx;
+            let ny = y + dy;
+
+            if !(0..256).contains(&nx) || !(0..256).contains(&ny) {
+                return None;
+            }
+
+            let index: (usize, usize) = (nx as usize, ny as usize);
+            let neighbor: (u8, u8) = (nx as u8, ny as u8);
+            self.map
+                .get(index)
+                .and_then(|tile| self.map.lookup(tile))
+                .filter(|properties| properties.walk_allowed())
+                .map(|_| neighbor)
+        })
     }
 }
