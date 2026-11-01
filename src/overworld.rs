@@ -249,9 +249,9 @@ impl Map {
             )
         }
 
-        // let scaled = imageops::resize(&img, 256 * 4, 256 * 4, imageops::FilterType::Nearest);
-        // scaled.save(path)?;
-        img.save(path)?;
+        let scaled = imageops::resize(&img, 256 * 4, 256 * 4, imageops::FilterType::Nearest);
+        scaled.save(path)?;
+        // img.save(path)?;
 
         Ok(())
     }
