@@ -224,7 +224,7 @@ impl Map {
 
     pub fn save_pathfinding_image(
         &self,
-        solution: Vec<(u8, u8)>,
+        solution: &[(u8, u8)],
         path: &Path,
         table: &TilePropertyTable,
     ) -> anyhow::Result<()> {
@@ -236,8 +236,17 @@ impl Map {
             }
         }
 
-        for (x, y) in solution {
-            img.put_pixel(x as u32, y as u32, image::Rgb([0, 255, 0]))
+        for (idx, (x, y)) in solution.into_iter().enumerate() {
+            img.put_pixel(
+                *x as u32,
+                *y as u32,
+                // TODO: hack
+                image::Rgb([
+                    (idx * 2).try_into().expect("failed to convert color"),
+                    255,
+                    (idx * 2).try_into().expect("failed to convert color"),
+                ]),
+            )
         }
 
         // let scaled = imageops::resize(&img, 256 * 4, 256 * 4, imageops::FilterType::Nearest);

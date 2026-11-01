@@ -135,13 +135,13 @@ fn test_pathfinding() -> anyhow::Result<()> {
     let rom = std::fs::read("ff1.nes")?;
     let map = WorldMap::parse(&rom)?;
 
-    let problem = PathProblem {
+    let solution = PathProblem {
         starting_tile: (153, 167),
         goal_tile: (125, 121),
         map: &map,
-    };
+    }
+    .solve()?;
 
-    let solution = problem.solve()?;
     insta::assert_debug_snapshot!(solution);
 
     map.map
