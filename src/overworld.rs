@@ -8,6 +8,16 @@ pub struct WorldMap {
     properties: TilePropertyTable,
 }
 
+impl WorldMap {
+    fn get(&self, (x, y): (usize, usize)) -> Option<&Tile> {
+        self.map.0.get(x).and_then(|row| row.get(y))
+    }
+
+    fn lookup(&self, tile: &Tile) -> Option<&TileProperties> {
+        self.properties.lookup(tile)
+    }
+}
+
 /// https://www.romhacking.net/documents/663/
 /// (Anomie’s disassembly of Final Fantasy 1 for the NES)
 ///
