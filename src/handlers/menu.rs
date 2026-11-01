@@ -1,4 +1,4 @@
-use crate::char_create;
+use crate::handlers::char_create;
 use crate::state::{GameProgress, GameState};
 
 use tetanes_core::{input::JoypadBtnState, mem::Read, prelude::*};

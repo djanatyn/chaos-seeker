@@ -1,5 +1,7 @@
 use crate::{
-    char_create, intro, menu,
+    handlers::char_create,
+    handlers::intro,
+    handlers::menu,
     state::{GameProgress, GameState},
 };
 
