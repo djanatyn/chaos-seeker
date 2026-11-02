@@ -14,3 +14,4 @@ tracing-subscriber = "0.3.19"
 thiserror = "2.0.12"
 strum = { version = "0.28.0", features = ["derive"] }
 insta = { version = "1.49.0", features = ["yaml"] }
+eframe = { version = "0.37.0" }

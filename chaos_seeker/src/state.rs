@@ -1,3 +1,4 @@
+use image::{ImageBuffer, Rgba};
 use tetanes_core::{input::JoypadBtnState, mem::Read, prelude::*};
 
 /// Progress through Final Fantasy 1.
@@ -40,10 +41,17 @@ impl GameState {
             .set_button(btn, state)
     }
 
+    pub fn image(&mut self) -> Option<ImageBuffer<Rgba<u8>, &[u8]>> {
+        ImageBuffer::<image::Rgba<u8>, &[u8]>::from_raw(
+            Ppu::WIDTH,
+            Ppu::HEIGHT,
+            self.control_deck.frame_buffer(),
+        )
+    }
     /// Take a screenshot of the game.
     pub fn screenshot(&mut self, filename: &str) {
         // Process frame buffer (e.g. by rendering it to the screen)
-        let image = image::ImageBuffer::<image::Rgba<u8>, &[u8]>::from_raw(
+        let image = ImageBuffer::<image::Rgba<u8>, &[u8]>::from_raw(
             Ppu::WIDTH,
             Ppu::HEIGHT,
             self.control_deck.frame_buffer(),

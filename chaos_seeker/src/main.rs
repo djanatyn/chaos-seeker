@@ -3,7 +3,6 @@ use chaos_seeker::state::GameState;
 use std::{thread::sleep, time::Duration};
 
 use tetanes_core::prelude::*;
-use tracing::{self};
 
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
@@ -13,6 +12,7 @@ fn main() -> anyhow::Result<()> {
 
     let _ = std::fs::create_dir("screenshots");
 
+    // TODO: move control deck creation into GameState::new
     let mut control_deck = ControlDeck::new();
     control_deck.load_rom_path("ff1.nes")?;
 
