@@ -16,6 +16,8 @@ fn main() {
 struct DebuggerApp {
     game: GameState,
     emulator_texture: Option<egui::TextureHandle>,
+    pathfind_x: u8,
+    pathfind_y: u8,
 }
 
 impl DebuggerApp {
@@ -27,9 +29,13 @@ impl DebuggerApp {
 
         let game = GameState::new(control_deck);
         let emulator_texture = None;
+        let pathfind_x = 0;
+        let pathfind_y = 0;
         DebuggerApp {
             game,
             emulator_texture,
+            pathfind_x,
+            pathfind_y,
         }
     }
 }
@@ -60,17 +66,30 @@ impl DebuggerApp {
 impl eframe::App for DebuggerApp {
     fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ui, |ui| {
-            if ui.button("tick").clicked() {
-                if let Err(error) = self.game.tick() {
-                    eprintln!("emulator tick failed: {error}");
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                    if ui.button("tick").clicked() {
+                        if let Err(error) = self.game.tick() {
+                            eprintln!("emulator tick failed: {error}");
+                        }
+
+                        self.update_emulator_texture(ui.ctx());
+                    }
+
+                    ui.separator();
+
+                    ui.vertical(|ui| {
+                        ui.add(egui::Slider::new(&mut self.pathfind_x, 0..=u8::MAX).text("x"));
+                        ui.add(egui::Slider::new(&mut self.pathfind_y, 0..=u8::MAX).text("y"));
+                    });
+                });
+
+                ui.separator();
+
+                if let Some(texture) = &self.emulator_texture {
+                    ui.add(egui::Image::new((texture.id(), texture.size_vec2())));
                 }
-
-                self.update_emulator_texture(ui.ctx());
-            }
-
-            if let Some(texture) = &self.emulator_texture {
-                ui.add(egui::Image::new((texture.id(), texture.size_vec2())));
-            }
+            })
         });
     }
 }
