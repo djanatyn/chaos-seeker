@@ -13,7 +13,7 @@ final fantasy 1 reverse-engineering project with [tetanes_core](https://docs.rs/
 
 ---
 
-<a href="./pathfinding.png"><img src="./pathfinding.png"></img></a>
+<a href="./pathfinding_03.png"><img src="./pathfinding_03.png"></img></a>
 
 ## blog posts
 - [parsing the final fantasy 1 NES world map (part 1)](https://djan.org/blog/ff1-world-map)
