@@ -31,8 +31,9 @@ struct DebuggerApp {
 impl DebuggerApp {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let mut control_deck = ControlDeck::new();
+        let mut rom = include_bytes!("../../ff1.nes");
         control_deck
-            .load_rom_path("ff1.nes")
+            .load_rom("ff1.nes", &mut &rom[..])
             .expect("failed to load ROM");
         control_deck.set_filter(VideoFilter::Pixellate);
 
