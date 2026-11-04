@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use image::{imageops, RgbImage};
 
@@ -10,9 +10,9 @@ pub struct WorldMap {
 
 impl WorldMap {
     pub fn parse(rom: &[u8]) -> anyhow::Result<Self> {
-        let table = PointerTable::parse(&rom)?;
-        let (map, length) = TileReader::parse_map(&rom, &table)?;
-        let properties = TilePropertyTable::load(&rom)?;
+        let table = PointerTable::parse(rom)?;
+        let (map, _length) = TileReader::parse_map(rom, &table)?;
+        let properties = TilePropertyTable::load(rom)?;
 
         Ok(WorldMap { map, properties })
     }

@@ -1,6 +1,10 @@
+#![feature(default_field_values)]
+
 use chaos_seeker::state::GameState;
 use eframe::egui;
+use std::time::{Duration, Instant};
 use tetanes_core::prelude::*;
+use tetanes_core::video::VideoFilter;
 
 fn main() {
     let _ = std::fs::create_dir("screenshots");
@@ -15,27 +19,27 @@ fn main() {
 
 struct DebuggerApp {
     game: GameState,
-    emulator_texture: Option<egui::TextureHandle>,
-    pathfind_x: u8,
-    pathfind_y: u8,
+    emulator_texture: Option<egui::TextureHandle> = None,
+    pathfind_x: u8 = 0,
+    pathfind_y: u8 = 0,
+    playing: bool = false,
+    speed: f64 = 0.1,
+    last_update: Instant,
+    accumulated_time: Duration = Duration::ZERO,
 }
 
 impl DebuggerApp {
-    fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let mut control_deck = ControlDeck::new();
         control_deck
             .load_rom_path("ff1.nes")
             .expect("failed to load ROM");
+        control_deck.set_filter(VideoFilter::Pixellate);
 
-        let game = GameState::new(control_deck);
-        let emulator_texture = None;
-        let pathfind_x = 0;
-        let pathfind_y = 0;
         DebuggerApp {
-            game,
-            emulator_texture,
-            pathfind_x,
-            pathfind_y,
+            game: GameState::new(control_deck),
+            last_update: Instant::now(),
+            ..
         }
     }
 }
@@ -57,17 +61,81 @@ impl DebuggerApp {
             self.emulator_texture = Some(ctx.load_texture(
                 "emulator-frame",
                 color_image,
-                egui::TextureOptions::NEAREST,
+                egui::TextureOptions {
+                    wrap_mode: egui::TextureWrapMode::ClampToEdge,
+                    ..egui::TextureOptions::NEAREST
+                },
             ));
         }
     }
 }
 
 impl eframe::App for DebuggerApp {
-    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ui, |ui| {
-            ui.vertical(|ui| {
-                ui.horizontal(|ui| {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        const FRAME_RATE: f64 = 60.0988;
+        const MAX_FRAMES_PER_UPDATE: usize = 8;
+
+        let frame_time: Duration = Duration::from_secs_f64(1.0 / FRAME_RATE);
+
+        let now = Instant::now();
+        let elapsed = now
+            .duration_since(self.last_update)
+            .min(Duration::from_millis(250));
+        self.last_update = now;
+
+        if self.playing {
+            self.accumulated_time += elapsed.mul_f64(self.speed);
+
+            let mut frames = 0;
+
+            while self.accumulated_time >= frame_time && frames < MAX_FRAMES_PER_UPDATE {
+                self.game.tick().expect("oh no game failed"); // TODO
+                self.update_emulator_texture(ui.ctx());
+                self.accumulated_time -= frame_time;
+                frames += 1;
+            }
+
+            if frames == MAX_FRAMES_PER_UPDATE {
+                self.accumulated_time = Duration::ZERO;
+            }
+
+            ui.ctx()
+                .request_repaint_after(frame_time.saturating_sub(self.accumulated_time));
+        }
+
+        egui::Panel::left("tools")
+            .min_size(32.0)
+            .resizable(true)
+            .show(ui, |ui| {
+                ui.vertical_centered_justified(|ui| {
+                    ui.vertical(|ui| {
+                        ui.label("world map pathfinding coordinates");
+                        ui.add(egui::Slider::new(&mut self.pathfind_x, 0..=u8::MAX).text("x"));
+                        ui.add(egui::Slider::new(&mut self.pathfind_y, 0..=u8::MAX).text("y"));
+                    });
+                    ui.vertical(|ui| {
+                        ui.label("game speed");
+                        ui.add(egui::Slider::new(&mut self.speed, 0.0..=8.0));
+                    });
+                    ui.separator();
+                    ui.vertical(|ui| {
+                        ui.label("game state");
+                        ui.monospace(format!("{:#?}", self.game.progress));
+                    });
+                })
+            });
+
+        egui::Panel::top("control")
+            .min_size(32.0)
+            .resizable(false)
+            .show(ui, |ui| {
+                ui.horizontal_centered(|ui| {
+                    let _ = ui.button("world map"); // TODO
+                    let _ = ui.button("emulator"); // TODO
+                    ui.separator();
+                    if ui.button("play").clicked() {
+                        self.playing = true;
+                    }
                     if ui.button("tick").clicked() {
                         if let Err(error) = self.game.tick() {
                             eprintln!("emulator tick failed: {error}");
@@ -75,21 +143,50 @@ impl eframe::App for DebuggerApp {
 
                         self.update_emulator_texture(ui.ctx());
                     }
-
-                    ui.separator();
-
-                    ui.vertical(|ui| {
-                        ui.add(egui::Slider::new(&mut self.pathfind_x, 0..=u8::MAX).text("x"));
-                        ui.add(egui::Slider::new(&mut self.pathfind_y, 0..=u8::MAX).text("y"));
-                    });
+                    if ui.button("pause").clicked() {
+                        self.playing = false;
+                    }
                 });
+            });
 
-                ui.separator();
-
+        egui::CentralPanel::default()
+            .frame(egui::Frame::NONE)
+            .show(ui, |ui| {
                 if let Some(texture) = &self.emulator_texture {
-                    ui.add(egui::Image::new((texture.id(), texture.size_vec2())));
+                    let native_size = texture.size_vec2();
+                    let available_size = ui.available_size();
+
+                    let fit_scale =
+                        (available_size.x / native_size.x).min(available_size.y / native_size.y);
+
+                    let scale = if fit_scale >= 1.0 {
+                        fit_scale.floor()
+                    } else {
+                        fit_scale
+                    };
+
+                    let display_size = native_size * scale;
+
+                    // reserve central panel
+                    let (viewport_rect, _) =
+                        ui.allocate_exact_size(available_size, egui::Sense::hover());
+
+                    // center emulator inside central panel
+                    let image_rect =
+                        egui::Rect::from_center_size(viewport_rect.center(), display_size);
+
+                    // background around viewport
+                    ui.painter()
+                        .rect_filled(viewport_rect, 0.0, egui::Color32::BLACK);
+
+                    // paint texture appropriately-sized
+                    ui.painter().image(
+                        texture.id(),
+                        image_rect,
+                        egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+                        egui::Color32::WHITE,
+                    );
                 }
-            })
-        });
+            });
     }
 }

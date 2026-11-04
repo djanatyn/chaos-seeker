@@ -1,3 +1,5 @@
+#![feature(default_field_values)]
+
 pub mod engine;
 pub mod handlers;
 pub mod overworld;

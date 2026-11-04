@@ -1,17 +1,38 @@
 use image::{ImageBuffer, Rgba};
 use tetanes_core::{input::JoypadBtnState, mem::Read, prelude::*};
 
+use crate::handlers;
+
 /// Progress through Final Fantasy 1.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum GameProgress {
     /// Stuck in the intro.
-    BootIntro,
+    BootIntro(BootIntroState),
     /// Main menu after intro.
-    BootMenu,
+    BootMenu(BootMenuState),
     /// Character creation for new game.
-    CharacterCreation,
+    CharacterCreation(CharacterCreationState),
     /// Unimplemented.
     Unknown,
+}
+
+#[derive(Debug, Clone)]
+pub struct BootIntroState {
+    pub remaining_frames: u64 = handlers::intro::WAIT_FRAMES,
+}
+
+#[derive(Debug, Clone)]
+pub struct BootMenuState {
+    pub cursor_value: Option<u8> = None,
+    pub hit_start: bool = false,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct CharacterCreationState {
+    pub party_complete: bool = false,
+    pub mode: Option<handlers::char_create::Mode> = None,
+    pub current_class: Option<handlers::char_create::StartingClass> = None,
+    pub slot: Option<u8> = None,
 }
 
 /// State of the game.
@@ -26,7 +47,7 @@ impl GameState {
     pub fn new(control_deck: ControlDeck) -> Self {
         Self {
             frame: 0,
-            progress: GameProgress::BootIntro,
+            progress: GameProgress::BootIntro(BootIntroState { .. }),
             control_deck,
         }
     }
@@ -42,12 +63,16 @@ impl GameState {
     }
 
     pub fn image(&mut self) -> Option<ImageBuffer<Rgba<u8>, &[u8]>> {
-        ImageBuffer::<image::Rgba<u8>, &[u8]>::from_raw(
+        let image = ImageBuffer::<image::Rgba<u8>, &[u8]>::from_raw(
             Ppu::WIDTH,
             Ppu::HEIGHT,
             self.control_deck.frame_buffer(),
-        )
+        )?;
+
+        image.save("frame.png").ok()?;
+        Some(image)
     }
+
     /// Take a screenshot of the game.
     pub fn screenshot(&mut self, filename: &str) {
         // Process frame buffer (e.g. by rendering it to the screen)
@@ -58,7 +83,7 @@ impl GameState {
         );
 
         if let Some(image) = image {
-            let _ = image.save(&filename);
+            let _ = image.save(filename);
             // tracing::warn!(filename, "saved screenshot");
         }
     }

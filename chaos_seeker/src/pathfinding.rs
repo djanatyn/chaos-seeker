@@ -3,7 +3,6 @@ use crate::overworld::{TileProperties, WorldMap};
 use std::{
     cmp::Ordering,
     collections::{BinaryHeap, HashMap},
-    path::PathBuf,
 };
 
 type Coordinate = (u8, u8); // (x, y)

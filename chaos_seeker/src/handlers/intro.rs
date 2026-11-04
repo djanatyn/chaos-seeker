@@ -2,7 +2,7 @@
 //!
 //! We wait a few frames before hitting the start button.
 
-use crate::state::{GameProgress, GameState};
+use crate::state::{BootIntroState, BootMenuState, GameProgress, GameState};
 use tetanes_core::{input::JoypadBtnState, mem::Read};
 use tracing::{self, instrument};
 
@@ -21,9 +21,10 @@ fn at_main_menu(state: &mut GameState) -> bool {
 /// Wait until the cutscene has played a bit, then hit start until we reach the main menu.
 #[instrument]
 pub fn handler(state: &mut GameState) -> GameProgress {
+    let remaining_frames = WAIT_FRAMES.saturating_sub(state.frame);
     // wait for intro to play before hitting buttons
     if state.frame <= WAIT_FRAMES {
-        return GameProgress::BootIntro;
+        return GameProgress::BootIntro(BootIntroState { remaining_frames });
     }
 
     if at_main_menu(state) {
@@ -31,10 +32,10 @@ pub fn handler(state: &mut GameState) -> GameProgress {
         state.screenshot("menu.png");
         state.set_button(JoypadBtnState::START, false);
 
-        return GameProgress::BootMenu;
+        return GameProgress::BootMenu(BootMenuState { .. });
     }
 
     // toggle start button until we reach the main menu
     state.toggle(JoypadBtnState::START);
-    GameProgress::BootIntro
+    GameProgress::BootIntro(BootIntroState { remaining_frames })
 }

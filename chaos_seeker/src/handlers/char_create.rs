@@ -1,11 +1,11 @@
-use crate::state::{GameProgress, GameState};
+use crate::state::{CharacterCreationState, GameProgress, GameState};
 use std::collections::HashMap;
 use tetanes_core::{input::JoypadBtnState, mem::Read};
 
 pub const SLOT_SELECTED_ADDRESS: u16 = 0x67;
 pub const CLASS_SELECTED_ADDRESS: u16 = 0x300;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Mode {
     SelectName,
     SelectClass,
@@ -28,7 +28,7 @@ pub const MODE_NAME_SELECT_VALUE: u8 = 0x4;
 pub const PARTY_COMPLETE_ADDRESS: u16 = 0x11;
 pub const PARTY_COMPLETE_VALUE: u8 = 0x0;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum StartingClass {
     Fighter,
     Thief,
@@ -153,35 +153,53 @@ fn navigate(_state: &mut GameState, target: char) -> bool {
 }
 
 pub fn handler(state: &mut GameState) -> GameProgress {
-    if party_complete(state) {
-        state.toggle(JoypadBtnState::START);
-        return GameProgress::Unknown;
-    }
+    let complete: bool = party_complete(state);
+    let mode = Mode::current(state);
 
-    match Mode::current(state) {
-        Some(Mode::SelectName) => {
-            let current_class =
-                StartingClass::current_class(state).expect("failed to find current class");
-            dbg!(current_class);
+    if let GameProgress::CharacterCreation(previous_state) = state.progress {
+        if complete {
+            state.toggle(JoypadBtnState::START);
+
+            return GameProgress::CharacterCreation(CharacterCreationState {
+                party_complete: complete,
+                mode,
+                ..previous_state
+            });
         }
-        Some(Mode::SelectClass) => {
-            let slot = current_slot(state).expect("failed to identify party slot");
-            let (desired_class, desired_name) = STARTING_PARTY
-                .get(slot as usize)
-                .expect("slot out of bounds");
-            let current_class =
-                StartingClass::current_class(state).expect("failed to find current class");
 
-            if current_class == *desired_class {
-                state.toggle(JoypadBtnState::A);
-            } else {
-                state.toggle(JoypadBtnState::B);
+        match mode {
+            Some(Mode::SelectName) => {
+                // TODO
+                GameProgress::CharacterCreation(CharacterCreationState {
+                    party_complete: complete,
+                    mode,
+                    ..previous_state
+                })
             }
+            Some(Mode::SelectClass) => {
+                let slot = current_slot(state);
+                let (desired_class, _desired_name) = STARTING_PARTY
+                    .get(slot.expect("failed to retrieve slot") as usize)
+                    .expect("slot out of bounds");
+                let current_class = StartingClass::current_class(state);
 
-            dbg!(slot, desired_class, desired_name, current_class);
+                if current_class.is_some_and(|class| class == *desired_class) {
+                    state.toggle(JoypadBtnState::A);
+                } else {
+                    state.toggle(JoypadBtnState::B);
+                }
+
+                GameProgress::CharacterCreation(CharacterCreationState {
+                    party_complete: complete,
+                    mode,
+                    current_class,
+                    slot,
+                    ..previous_state
+                })
+            }
+            None => panic!("invalid character creation mode"),
         }
-        None => panic!("invalid character creation mode"),
+    } else {
+        panic!("lost")
     }
-
-    GameProgress::CharacterCreation
 }
