@@ -78,7 +78,7 @@ impl NameCoordinate {
     const COL_ADDRESS: u16 = 0x65;
     const SIZE: usize = 2;
 
-    fn parse(state: &mut GameState) -> Self {
+    fn current(state: &mut GameState) -> Self {
         NameCoordinate(u16::from_le_bytes([
             state.read(Self::COL_ADDRESS),
             state.read(Self::ROW_ADDRESS),
@@ -102,15 +102,11 @@ impl CurrentName {
         ])
     }
 
-    fn next_coordinate(
-        &self,
-        current_name: &CurrentName,
-        desired_name: &str,
-    ) -> Option<NameCoordinate> {
+    fn next_coordinate(&self, desired_name: &str) -> Option<NameCoordinate> {
         let map = HashMap::from(CHARACTER_MAP); // TODO: LazyLock
         for (idx, desired_character) in desired_name.chars().enumerate() {
             if let Some((coord, desired_value)) = map.get(&desired_character) {
-                match current_name.0[idx] {
+                match self.0[idx] {
                     // name[idx] is set correctly
                     current_value if current_value == *desired_value => continue,
                     // name[idx] is empty
@@ -199,15 +195,30 @@ fn party_complete(state: &mut GameState) -> bool {
 /// Navigate towards specified character.
 ///
 /// Returns:
-/// - true if at desired character,
-/// - false if not there yet.
-fn navigate(_state: &mut GameState, target: char) -> bool {
-    let map = HashMap::from(CHARACTER_MAP);
-    if let Some((_coord, _value)) = map.get(&target) {
-        todo!()
-    } else {
-        false
+/// - (true, coords) if at desired character,
+/// - (false, coords) if not there yet.
+fn navigate(state: &mut GameState, target: NameCoordinate) -> (bool, NameCoordinate) {
+    let current = NameCoordinate::current(state);
+
+    let [current_row, current_col] = current.0.to_le_bytes();
+    let [target_row, target_col] = target.0.to_le_bytes();
+
+    dbg!((&current_row, &current_col));
+    dbg!((&target_row, target_col));
+
+    if target_col == current_col && target_row == current_row {
+        return (true, current);
     }
+
+    if target_row > current_row {
+        state.toggle(JoypadBtnState::DOWN); // TODO: just press down
+    }
+
+    if target_col > current_col {
+        state.toggle(JoypadBtnState::RIGHT); // TODO just press right
+    }
+
+    return (false, current);
 }
 
 pub fn handler(state: &mut GameState) -> GameProgress {
@@ -217,7 +228,6 @@ pub fn handler(state: &mut GameState) -> GameProgress {
     if let GameProgress::CharacterCreation(previous_state) = state.progress {
         if complete {
             state.toggle(JoypadBtnState::START);
-            dbg!(NameCoordinate::parse(state));
 
             return GameProgress::CharacterCreation(CharacterCreationState {
                 party_complete: complete,
@@ -228,6 +238,23 @@ pub fn handler(state: &mut GameState) -> GameProgress {
 
         match mode {
             Some(Mode::SelectName) => {
+                let slot = current_slot(state);
+                let current_name = CurrentName::parse(state);
+                let (_class, desired_name) = STARTING_PARTY
+                    .get(slot.expect("failed to retrieve slot") as usize)
+                    .expect("slot out of bounds");
+
+                dbg!((&slot, &current_name, &desired_name));
+
+                match current_name.next_coordinate(desired_name) {
+                    Some(target) => {
+                        dbg!(&target);
+                        navigate(state, target);
+                        GameProgress::Pause
+                    }
+                    None => GameProgress::Pause,
+                }
+
                 // TODO: review accumulated name bytes (how?)
                 // TODO: decide if name completed
                 // TODO: retrieve current position + current character
@@ -235,8 +262,6 @@ pub fn handler(state: &mut GameState) -> GameProgress {
                 // TODO: decide direction if movement is needed
                 // TODO: hit direction if movement is needed
                 // TODO: hit A if character is correct
-                dbg!(NameCoordinate::parse(state));
-                GameProgress::Pause
                 // GameProgress::CharacterCreation(CharacterCreationState {
                 //     party_complete: complete,
                 //     mode,
