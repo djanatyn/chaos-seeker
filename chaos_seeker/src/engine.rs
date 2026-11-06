@@ -1,21 +1,28 @@
 use crate::{
-    handlers::char_create,
-    handlers::intro,
-    handlers::menu,
-    state::{GameProgress, GameState},
+    handlers::{char_create, intro, menu},
+    state::{ButtonSet, GameProgress, GameState, HandlerOutput},
 };
 
+// pub type Handler = fn(&mut GameState) -> HandlerOutput;
+pub type Handler = fn(&mut GameState) -> GameProgress;
+
 impl GameState {
-    /// Advance game state.
-    pub fn handler(&mut self) -> GameProgress {
-        let task = match self.progress {
+    fn handler(&self) -> Handler {
+        match self.progress {
             GameProgress::BootIntro { .. } => intro::handler,
             GameProgress::BootMenu { .. } => menu::handler,
             GameProgress::CharacterCreation { .. } => char_create::handler,
-            GameProgress::Pause => return self.progress.clone(),
-            GameProgress::Unknown => return self.progress.clone(),
-        };
+            GameProgress::Pause | GameProgress::Unknown => |_| GameProgress::Pause,
+            // GameProgress::Pause | GameProgress::Unknown => |_| HandlerOutput {
+            //     progress: GameProgress::Pause,
+            //     buttons: ButtonSet {},
+            // },
+        }
+    }
 
-        task(self)
+    /// Advance game state.
+    // pub fn progress(&mut self) -> HandlerOutput {
+    pub fn advance_progress(&mut self) -> GameProgress {
+        self.handler()(self)
     }
 }

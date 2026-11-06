@@ -3,6 +3,15 @@ use tetanes_core::{input::JoypadBtnState, mem::Read, prelude::*};
 
 use crate::handlers;
 
+#[derive(Debug)]
+pub struct ButtonSet {}
+
+#[derive(Debug)]
+pub struct HandlerOutput {
+    pub progress: GameProgress,
+    pub buttons: ButtonSet = ButtonSet {},
+}
+
 /// Progress through Final Fantasy 1.
 #[derive(Debug, Clone, PartialEq)]
 pub enum GameProgress {
@@ -117,7 +126,7 @@ impl GameState {
         let time = self.control_deck.clock_frame()?;
         self.frame += 1;
 
-        self.progress = self.handler();
+        self.progress = self.advance_progress();
         Ok(time)
     }
 }
