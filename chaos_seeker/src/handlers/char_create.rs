@@ -74,12 +74,56 @@ pub type Value = u8;
 pub struct NameCoordinate(u16);
 
 impl NameCoordinate {
-    const ADDRESS: u16 = 0x40;
+    const ROW_ADDRESS: u16 = 0x64;
+    const COL_ADDRESS: u16 = 0x65;
     const SIZE: usize = 2;
 
     fn parse(state: &mut GameState) -> Self {
-        let bytes: [u8; 2] = [state.read(Self::ADDRESS), state.read(Self::ADDRESS + 1)];
-        NameCoordinate(u16::from_le_bytes(bytes))
+        NameCoordinate(u16::from_le_bytes([
+            state.read(Self::COL_ADDRESS),
+            state.read(Self::ROW_ADDRESS),
+        ]))
+    }
+}
+
+#[derive(Debug)]
+struct CurrentName([u8; 4]);
+
+impl CurrentName {
+    const ADDRESS: u16 = 0x5c;
+    const SIZE: usize = 4;
+
+    fn parse(state: &mut GameState) -> Self {
+        CurrentName([
+            state.read(Self::ADDRESS + 3),
+            state.read(Self::ADDRESS + 2),
+            state.read(Self::ADDRESS + 1),
+            state.read(Self::ADDRESS + 0),
+        ])
+    }
+
+    fn next_coordinate(
+        &self,
+        current_name: &CurrentName,
+        desired_name: &str,
+    ) -> Option<NameCoordinate> {
+        let map = HashMap::from(CHARACTER_MAP); // TODO: LazyLock
+        for (idx, desired_character) in desired_name.chars().enumerate() {
+            if let Some((coord, desired_value)) = map.get(&desired_character) {
+                match current_name.0[idx] {
+                    // name[idx] is set correctly
+                    current_value if current_value == *desired_value => continue,
+                    // name[idx] is empty
+                    0xFF => return Some(NameCoordinate(*coord)),
+                    // name[idx] is non-empty and invalid
+                    _ => panic!("broken name"),
+                }
+            } else {
+                panic!("unable to find character in map")
+            }
+        }
+
+        None
     }
 }
 
@@ -92,6 +136,7 @@ impl NameCoordinate {
 /// a b c d e f g h i j: 0xA4 - 0xAD | 0x0400 - 0x0409
 /// k l m n o p q r s t: 0xAE - 0xB7 | 0x0500 - 0x0509
 /// u v w x y z - … ! ?: 0xB8 - 0xC5 | 0x0600 - 0x0609
+/// TODO: LazyLock
 pub const CHARACTER_MAP: [(Character, (Coordinate, Value)); 40] = [
     // 0x0000
     ('A', (0x0000, 0x8A)),
@@ -190,11 +235,13 @@ pub fn handler(state: &mut GameState) -> GameProgress {
                 // TODO: decide direction if movement is needed
                 // TODO: hit direction if movement is needed
                 // TODO: hit A if character is correct
-                GameProgress::CharacterCreation(CharacterCreationState {
-                    party_complete: complete,
-                    mode,
-                    ..previous_state
-                })
+                dbg!(NameCoordinate::parse(state));
+                GameProgress::Pause
+                // GameProgress::CharacterCreation(CharacterCreationState {
+                //     party_complete: complete,
+                //     mode,
+                //     ..previous_state
+                // })
             }
             Some(Mode::SelectClass) => {
                 let slot = current_slot(state);
