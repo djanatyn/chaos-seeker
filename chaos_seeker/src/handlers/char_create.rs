@@ -5,7 +5,7 @@ use tetanes_core::{input::JoypadBtnState, mem::Read};
 pub const SLOT_SELECTED_ADDRESS: u16 = 0x67;
 pub const CLASS_SELECTED_ADDRESS: u16 = 0x300;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Mode {
     SelectName,
     SelectClass,
@@ -69,6 +69,19 @@ impl StartingClass {
 pub type Character = char;
 pub type Coordinate = u16;
 pub type Value = u8;
+
+#[derive(Debug)]
+pub struct NameCoordinate(u16);
+
+impl NameCoordinate {
+    const ADDRESS: u16 = 0x40;
+    const SIZE: usize = 2;
+
+    fn parse(state: &mut GameState) -> Self {
+        let bytes: [u8; 2] = [state.read(Self::ADDRESS), state.read(Self::ADDRESS + 1)];
+        NameCoordinate(u16::from_le_bytes(bytes))
+    }
+}
 
 ///    character map         name            pos
 /// -------------------  -----------   ---------------
@@ -159,6 +172,7 @@ pub fn handler(state: &mut GameState) -> GameProgress {
     if let GameProgress::CharacterCreation(previous_state) = state.progress {
         if complete {
             state.toggle(JoypadBtnState::START);
+            dbg!(NameCoordinate::parse(state));
 
             return GameProgress::CharacterCreation(CharacterCreationState {
                 party_complete: complete,
@@ -169,7 +183,13 @@ pub fn handler(state: &mut GameState) -> GameProgress {
 
         match mode {
             Some(Mode::SelectName) => {
-                // TODO
+                // TODO: review accumulated name bytes (how?)
+                // TODO: decide if name completed
+                // TODO: retrieve current position + current character
+                // TODO: decide if movement needed
+                // TODO: decide direction if movement is needed
+                // TODO: hit direction if movement is needed
+                // TODO: hit A if character is correct
                 GameProgress::CharacterCreation(CharacterCreationState {
                     party_complete: complete,
                     mode,

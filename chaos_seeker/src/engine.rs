@@ -5,7 +5,6 @@ use crate::{
     state::{GameProgress, GameState},
 };
 
-
 impl GameState {
     /// Advance game state.
     pub fn handler(&mut self) -> GameProgress {
@@ -13,6 +12,7 @@ impl GameState {
             GameProgress::BootIntro { .. } => intro::handler,
             GameProgress::BootMenu { .. } => menu::handler,
             GameProgress::CharacterCreation { .. } => char_create::handler,
+            GameProgress::Pause => return self.progress.clone(),
             GameProgress::Unknown => return self.progress.clone(),
         };
 

@@ -4,7 +4,7 @@ use tetanes_core::{input::JoypadBtnState, mem::Read, prelude::*};
 use crate::handlers;
 
 /// Progress through Final Fantasy 1.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum GameProgress {
     /// Stuck in the intro.
     BootIntro(BootIntroState),
@@ -12,22 +12,24 @@ pub enum GameProgress {
     BootMenu(BootMenuState),
     /// Character creation for new game.
     CharacterCreation(CharacterCreationState),
+    /// Intentionally paused.
+    Pause,
     /// Unimplemented.
     Unknown,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BootIntroState {
     pub remaining_frames: u64 = handlers::intro::WAIT_FRAMES,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BootMenuState {
     pub cursor_value: Option<u8> = None,
     pub hit_start: bool = false,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CharacterCreationState {
     pub party_complete: bool = false,
     pub mode: Option<handlers::char_create::Mode> = None,

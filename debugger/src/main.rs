@@ -1,6 +1,6 @@
 #![feature(default_field_values)]
 
-use chaos_seeker::state::GameState;
+use chaos_seeker::state::{GameProgress, GameState};
 use eframe::egui;
 use std::time::{Duration, Instant};
 use tetanes_core::prelude::*;
@@ -31,7 +31,7 @@ struct DebuggerApp {
 impl DebuggerApp {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let mut control_deck = ControlDeck::new();
-        let mut rom = include_bytes!("../../ff1.nes");
+        let rom = include_bytes!("../../ff1.nes");
         control_deck
             .load_rom("ff1.nes", &mut &rom[..])
             .expect("failed to load ROM");
@@ -83,6 +83,10 @@ impl eframe::App for DebuggerApp {
             .duration_since(self.last_update)
             .min(Duration::from_millis(250));
         self.last_update = now;
+
+        if self.game.progress == GameProgress::Pause {
+            self.playing = false;
+        }
 
         if self.playing {
             self.accumulated_time += elapsed.mul_f64(self.speed);
