@@ -1,9 +1,24 @@
 use crate::state::{CharacterCreationState, GameProgress, GameState, HandlerOutput};
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 use tetanes_core::{input::JoypadBtnState, mem::Read};
 
-pub const SLOT_SELECTED_ADDRESS: u16 = 0x67;
-pub const CLASS_SELECTED_ADDRESS: u16 = 0x300;
+/// What slot is the party member currently in?
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Slot(usize);
+
+impl Slot {
+    const ADDRESS: u16 = 0x67;
+
+    fn current(state: &mut GameState) -> Option<Self> {
+        match state.read(Self::ADDRESS) {
+            0x00 => Some(Slot(0)),
+            0x10 => Some(Slot(1)),
+            0x20 => Some(Slot(2)),
+            0x30 => Some(Slot(3)),
+            value => panic!("invalid current slot offset: {value:#04x}"),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Mode {
@@ -12,21 +27,18 @@ pub enum Mode {
 }
 
 impl Mode {
+    const MODE_ADDRESS: u16 = 0x1a;
+    const MODE_CLASS_SELECT_VALUE: u8 = 0x8;
+    const MODE_NAME_SELECT_VALUE: u8 = 0x4;
+
     fn current(state: &mut GameState) -> Option<Self> {
-        match state.read(MODE_ADDRESS) {
-            MODE_CLASS_SELECT_VALUE => Some(Mode::SelectClass),
-            MODE_NAME_SELECT_VALUE => Some(Mode::SelectName),
+        match state.read(Self::MODE_ADDRESS) {
+            Self::MODE_CLASS_SELECT_VALUE => Some(Mode::SelectClass),
+            Self::MODE_NAME_SELECT_VALUE => Some(Mode::SelectName),
             _ => None,
         }
     }
 }
-
-pub const MODE_ADDRESS: u16 = 0x1a;
-pub const MODE_CLASS_SELECT_VALUE: u8 = 0x8;
-pub const MODE_NAME_SELECT_VALUE: u8 = 0x4;
-
-pub const PARTY_COMPLETE_ADDRESS: u16 = 0x11;
-pub const PARTY_COMPLETE_VALUE: u8 = 0x0;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum StartingClass {
@@ -41,10 +53,10 @@ pub enum StartingClass {
 use StartingClass::*;
 
 pub const STARTING_PARTY: [(StartingClass, &str); 4] = [
-    (Fighter, "LDA"),
-    (BlackBelt, "ADC"),
-    (WhiteMage, "JMP"),
-    (BlackMage, "CMP"),
+    (Fighter, "LDA "),
+    (BlackBelt, "ADC "),
+    (WhiteMage, "JMP "),
+    (BlackMage, "CMP "),
 ];
 
 impl StartingClass {
@@ -61,10 +73,13 @@ impl StartingClass {
     }
 
     /// Current party member slot selected class.
-    fn current_class(state: &mut GameState) -> Option<Self> {
-        Self::selection(state.read(CLASS_SELECTED_ADDRESS))
+    fn current_class(state: &mut GameState, slot: &Slot) -> Option<Self> {
+        Self::selection(state.read(CLASS_SELECTION_ADDRESS + (slot.0 as u16 * SLOT_OFFSET)))
     }
 }
+
+pub const CLASS_SELECTION_ADDRESS: u16 = 0x300;
+pub const SLOT_OFFSET: u16 = 0x10;
 
 pub type Character = char;
 pub type Coordinate = u16;
@@ -80,8 +95,8 @@ impl NameCoordinate {
 
     fn current(state: &mut GameState) -> Self {
         NameCoordinate(u16::from_le_bytes([
-            state.read(Self::COL_ADDRESS),
             state.read(Self::ROW_ADDRESS),
+            state.read(Self::COL_ADDRESS),
         ]))
     }
 }
@@ -95,10 +110,10 @@ impl CurrentName {
 
     fn parse(state: &mut GameState) -> Self {
         CurrentName([
-            state.read(Self::ADDRESS + 3),
-            state.read(Self::ADDRESS + 2),
-            state.read(Self::ADDRESS + 1),
             state.read(Self::ADDRESS + 0),
+            state.read(Self::ADDRESS + 1),
+            state.read(Self::ADDRESS + 2),
+            state.read(Self::ADDRESS + 3),
         ])
     }
 
@@ -112,7 +127,12 @@ impl CurrentName {
                     // name[idx] is empty
                     0xFF => return Some(NameCoordinate(*coord)),
                     // name[idx] is non-empty and invalid
-                    _ => panic!("broken name"),
+                    _ => {
+                        dbg!(&self);
+                        dbg!((coord, desired_value));
+                        dbg!(idx);
+                        panic!("broken name")
+                    }
                 }
             } else {
                 panic!("unable to find character in map")
@@ -182,11 +202,8 @@ pub const CHARACTER_MAP: [(Character, (Coordinate, Value)); 40] = [
     // ...
 ];
 
-/// Current party member slot (0x0 -> 0x4)
-fn current_slot(state: &mut GameState) -> Option<u8> {
-    let value = state.read(SLOT_SELECTED_ADDRESS);
-    (0..4).contains(&value).then_some(value)
-}
+pub const PARTY_COMPLETE_ADDRESS: u16 = 0x11;
+pub const PARTY_COMPLETE_VALUE: u8 = 0x0;
 
 fn party_complete(state: &mut GameState) -> bool {
     state.read(PARTY_COMPLETE_ADDRESS) == PARTY_COMPLETE_VALUE
@@ -199,30 +216,29 @@ fn party_complete(state: &mut GameState) -> bool {
 fn navigate(state: &mut GameState, target: NameCoordinate) -> Option<JoypadBtnState> {
     let current = NameCoordinate::current(state);
 
-    let [current_row, current_col] = current.0.to_le_bytes();
-    let [target_row, target_col] = target.0.to_le_bytes();
+    let [current_col, current_row] = current.0.to_le_bytes();
+    let [target_col, target_row] = target.0.to_le_bytes();
 
     dbg!((&current_row, &current_col));
     dbg!((&target_row, target_col));
 
-    if target_col == current_col && target_row == current_row {
-        return None;
+    match target_row.cmp(&current_row) {
+        Ordering::Greater => Some(JoypadBtnState::DOWN),
+        Ordering::Less => Some(JoypadBtnState::UP),
+        Ordering::Equal => match target_col.cmp(&current_col) {
+            Ordering::Greater => Some(JoypadBtnState::RIGHT),
+            Ordering::Less => Some(JoypadBtnState::LEFT),
+            Ordering::Equal => None,
+        },
     }
-
-    if target_row > current_row {
-        return Some(JoypadBtnState::DOWN);
-    }
-
-    if target_col > current_col {
-        return Some(JoypadBtnState::RIGHT);
-    }
-
-    panic!("i'm lost")
 }
 
 pub fn handler(state: &mut GameState) -> HandlerOutput {
-    let complete: bool = party_complete(state);
     let mode = Mode::current(state);
+    let current_slot: Option<Slot> = Slot::current(state);
+    let complete: bool = party_complete(state);
+
+    dbg!((&complete, &mode, &current_slot, &state.progress));
 
     if let GameProgress::CharacterCreation(previous_state) = state.progress {
         if complete {
@@ -232,30 +248,55 @@ pub fn handler(state: &mut GameState) -> HandlerOutput {
                     mode,
                     ..previous_state
                 }),
-                buttons: JoypadBtnState::START,
+                buttons: state.tap(JoypadBtnState::A),
             };
         }
 
-        let slot = current_slot(state);
-        let (desired_class, desired_name) = STARTING_PARTY
-            .get(slot.expect("failed to retrieve slot") as usize)
-            .expect("slot out of bounds");
-        let current_class = StartingClass::current_class(state);
+        let slot = current_slot.expect("failed to retrieve slot");
+        let (desired_class, desired_name) = STARTING_PARTY.get(slot.0).expect("slot out of bounds");
+        let current_class = StartingClass::current_class(state, &slot);
 
         match mode {
             Some(Mode::SelectName) => {
-                let current_name = CurrentName::parse(state);
+                let current_name = dbg!(CurrentName::parse(state));
 
-                dbg!((&slot, &current_name, &desired_name));
-                dbg!(current_name.next_coordinate(desired_name));
-                dbg!(navigate(
-                    state,
-                    current_name.next_coordinate(desired_name).unwrap()
-                ));
+                let buttons = if let Some(coordinate) = current_name.next_coordinate(desired_name) {
+                    // name is incomplete
+                    if let Some(direction) = navigate(state, coordinate) {
+                        state.tap(direction)
+                    } else {
+                        // select current letter
+                        state.tap(JoypadBtnState::A)
+                    }
+                } else {
+                    // name is complete: check if we're at last character
+                    // (if the last character is 0xFF, we might not be there yet)
+                    let last_character: char =
+                        desired_name.chars().last().expect("no last character?");
+                    let map = HashMap::from(CHARACTER_MAP);
+                    let (last_coord, _): (Coordinate, Value) =
+                        *map.get(&last_character).expect("failed to lookup name");
+
+                    if let Some(direction) = navigate(state, NameCoordinate(last_coord)) {
+                        // navigate to last character
+                        state.tap(direction)
+                    } else {
+                        // tap A to continue
+                        state.tap(JoypadBtnState::A)
+                    }
+                };
+
+                dbg!(&buttons);
 
                 HandlerOutput {
-                    progress: GameProgress::Pause,
-                    ..
+                    progress: GameProgress::CharacterCreation(CharacterCreationState {
+                        party_complete: complete,
+                        mode,
+                        current_class,
+                        slot: Some(slot),
+                        ..previous_state
+                    }),
+                    buttons,
                 }
             }
             Some(Mode::SelectClass) => HandlerOutput {
@@ -263,16 +304,19 @@ pub fn handler(state: &mut GameState) -> HandlerOutput {
                     party_complete: complete,
                     mode,
                     current_class,
-                    slot,
+                    slot: Some(slot),
                     ..previous_state
                 }),
                 buttons: if current_class.is_some_and(|class| class == *desired_class) {
                     JoypadBtnState::A
                 } else {
-                    JoypadBtnState::B
+                    state.tap(JoypadBtnState::RIGHT)
                 },
             },
-            None => panic!("invalid character creation mode"),
+            None => HandlerOutput {
+                progress: GameProgress::Pause,
+                ..
+            },
         }
     } else {
         panic!("lost")

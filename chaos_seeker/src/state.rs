@@ -42,7 +42,7 @@ pub struct CharacterCreationState {
     pub party_complete: bool = false,
     pub mode: Option<handlers::char_create::Mode> = None,
     pub current_class: Option<handlers::char_create::StartingClass> = None,
-    pub slot: Option<u8> = None,
+    pub slot: Option<handlers::char_create::Slot> = None,
 }
 
 /// State of the game.
@@ -95,6 +95,20 @@ impl GameState {
         if let Some(image) = image {
             let _ = image.save(filename);
             // tracing::warn!(filename, "saved screenshot");
+        }
+    }
+
+    pub fn buttons(&mut self) -> JoypadBtnState {
+        self.control_deck.joypad(Player::One).buttons
+    }
+
+    pub fn tap(&mut self, button: JoypadBtnState) -> JoypadBtnState {
+        let p1 = self.control_deck.joypad_mut(Player::One);
+
+        if p1.buttons.contains(button) {
+            JoypadBtnState::empty()
+        } else {
+            button
         }
     }
 

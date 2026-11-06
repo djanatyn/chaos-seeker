@@ -1,4 +1,3 @@
-use crate::handlers::char_create;
 use crate::state::{BootMenuState, CharacterCreationState, GameProgress, GameState, HandlerOutput};
 
 use tetanes_core::input::JoypadBtnState;
@@ -11,12 +10,15 @@ pub const CURSOR_ADDRESS: u16 = 0x62;
 /// Value of CURSOR_ADDRESS when pointing at NEW GAME.
 pub const NEW_GAME_VALUE: u8 = 0x1;
 
+pub const CHAR_CREATION_MODE_ADDRESS: u16 = 0x67;
+pub const CHAR_CREATION_MODE_VALUE: u8 = 0x0;
+
 fn cursor_new_game(state: &mut GameState) -> bool {
     state.read(CURSOR_ADDRESS) == NEW_GAME_VALUE
 }
 
 fn at_character_creation(state: &mut GameState) -> bool {
-    state.read(char_create::SLOT_SELECTED_ADDRESS) == 0x0
+    state.read(CHAR_CREATION_MODE_ADDRESS) == CHAR_CREATION_MODE_VALUE
 }
 
 /// Move cursor to new game and hit start.
