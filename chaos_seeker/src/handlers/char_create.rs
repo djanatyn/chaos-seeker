@@ -85,7 +85,7 @@ pub type Character = char;
 pub type Coordinate = u16;
 pub type Value = u8;
 
-#[derive(Debug)]
+#[derive(PartialEq, Clone)]
 pub struct NameCoordinate(u16);
 
 impl NameCoordinate {
@@ -99,6 +99,21 @@ impl NameCoordinate {
             state.read(Self::COL_ADDRESS),
         ]))
     }
+
+    pub fn x_y(&self) -> (u8, u8) {
+        let [current_col, current_row] = self.0.to_le_bytes();
+        (current_col, current_row)
+    }
+}
+
+impl std::fmt::Debug for NameCoordinate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (x, y) = self.x_y();
+        f.debug_struct("NameCoordinate")
+            .field("x", &x)
+            .field("y", &y)
+            .finish()
+    }
 }
 
 #[derive(Debug)]
@@ -107,6 +122,20 @@ struct CurrentName([u8; 4]);
 impl CurrentName {
     const ADDRESS: u16 = 0x5c;
     const SIZE: usize = 4;
+
+    fn string(&self) -> String {
+        let map = HashMap::from(CHARACTER_MAP); // TODO: LazyLock
+        self.0
+            .iter()
+            .enumerate()
+            .map(|(idx, character)| {
+                CHARACTER_MAP
+                    .iter()
+                    .find_map(|(k, v)| (v.1 == *character).then_some(k))
+                    .expect("invalid name")
+            })
+            .collect()
+    }
 
     fn parse(state: &mut GameState) -> Self {
         CurrentName([
@@ -127,12 +156,7 @@ impl CurrentName {
                     // name[idx] is empty
                     0xFF => return Some(NameCoordinate(*coord)),
                     // name[idx] is non-empty and invalid
-                    _ => {
-                        dbg!(&self);
-                        dbg!((coord, desired_value));
-                        dbg!(idx);
-                        panic!("broken name")
-                    }
+                    _ => panic!("broken name"),
                 }
             } else {
                 panic!("unable to find character in map")
@@ -236,11 +260,18 @@ fn navigate(state: &mut GameState, target: NameCoordinate) -> Option<JoypadBtnSt
 pub fn handler(state: &mut GameState) -> HandlerOutput {
     let mode = Mode::current(state);
     let current_slot: Option<Slot> = Slot::current(state);
-    let complete: bool = party_complete(state);
+    let complete: bool =
+        party_complete(state) && current_slot == Some(Slot(3)) && mode == Some(Mode::SelectClass);
 
-    dbg!((&complete, &mode, &current_slot, &state.progress));
+    let cursor_coordinate = NameCoordinate::current(state);
 
-    if let GameProgress::CharacterCreation(previous_state) = state.progress {
+    let mut name_done: Option<bool> = None;
+    let mut target_cursor_coordinate: Option<NameCoordinate> = None;
+    let name = CurrentName::parse(state);
+
+    if let GameProgress::CharacterCreation(ref previous) = state.progress {
+        let previous_state = previous.clone(); // TODO: efficiency
+
         if complete {
             return HandlerOutput {
                 progress: GameProgress::CharacterCreation(CharacterCreationState {
@@ -258,9 +289,9 @@ pub fn handler(state: &mut GameState) -> HandlerOutput {
 
         match mode {
             Some(Mode::SelectName) => {
-                let current_name = dbg!(CurrentName::parse(state));
+                let buttons = if let Some(coordinate) = name.next_coordinate(desired_name) {
+                    target_cursor_coordinate = Some(coordinate.clone());
 
-                let buttons = if let Some(coordinate) = current_name.next_coordinate(desired_name) {
                     // name is incomplete
                     if let Some(direction) = navigate(state, coordinate) {
                         state.tap(direction)
@@ -294,6 +325,9 @@ pub fn handler(state: &mut GameState) -> HandlerOutput {
                         mode,
                         current_class,
                         slot: Some(slot),
+                        current_name: Some(name.string()),
+                        cursor_coordinate: Some(cursor_coordinate),
+                        target_cursor_coordinate,
                         ..previous_state
                     }),
                     buttons,

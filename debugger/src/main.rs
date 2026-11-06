@@ -23,7 +23,7 @@ struct DebuggerApp {
     pathfind_x: u8 = 0,
     pathfind_y: u8 = 0,
     playing: bool = false,
-    speed: f64 = 0.1,
+    speed: f64 = 0.5,
     last_update: Instant,
     accumulated_time: Duration = Duration::ZERO,
 }
@@ -84,10 +84,6 @@ impl eframe::App for DebuggerApp {
             .min(Duration::from_millis(250));
         self.last_update = now;
 
-        if self.game.progress == GameProgress::Pause {
-            self.playing = false;
-        }
-
         if self.playing {
             self.accumulated_time += elapsed.mul_f64(self.speed);
 
@@ -95,6 +91,9 @@ impl eframe::App for DebuggerApp {
 
             while self.accumulated_time >= frame_time && frames < MAX_FRAMES_PER_UPDATE {
                 self.game.auto_advance().expect("oh no game failed"); // TODO
+                if self.game.progress == GameProgress::Pause {
+                    self.playing = false;
+                }
                 self.update_emulator_texture(ui.ctx());
                 self.accumulated_time -= frame_time;
                 frames += 1;
@@ -113,14 +112,14 @@ impl eframe::App for DebuggerApp {
             .resizable(true)
             .show(ui, |ui| {
                 ui.vertical_centered_justified(|ui| {
-                    ui.vertical(|ui| {
-                        ui.label("world map pathfinding coordinates");
-                        ui.add(egui::Slider::new(&mut self.pathfind_x, 0..=u8::MAX).text("x"));
-                        ui.add(egui::Slider::new(&mut self.pathfind_y, 0..=u8::MAX).text("y"));
-                    });
+                    // ui.vertical(|ui| {
+                    //     ui.label("world map pathfinding coordinates");
+                    //     ui.add(egui::Slider::new(&mut self.pathfind_x, 0..=u8::MAX).text("x"));
+                    //     ui.add(egui::Slider::new(&mut self.pathfind_y, 0..=u8::MAX).text("y"));
+                    // });
                     ui.vertical(|ui| {
                         ui.label("game speed");
-                        ui.add(egui::Slider::new(&mut self.speed, 0.0..=8.0));
+                        ui.add(egui::Slider::new(&mut self.speed, 0.0..=4.0));
                     });
                     ui.separator();
                     ui.vertical(|ui| {

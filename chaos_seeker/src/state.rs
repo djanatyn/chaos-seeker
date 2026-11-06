@@ -37,12 +37,15 @@ pub struct BootMenuState {
     pub hit_start: bool = false,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CharacterCreationState {
     pub party_complete: bool = false,
     pub mode: Option<handlers::char_create::Mode> = None,
     pub current_class: Option<handlers::char_create::StartingClass> = None,
     pub slot: Option<handlers::char_create::Slot> = None,
+    pub current_name: Option<String> = None,
+    pub cursor_coordinate: Option<handlers::char_create::NameCoordinate> = None,
+    pub target_cursor_coordinate: Option<handlers::char_create::NameCoordinate> = None,
 }
 
 /// State of the game.

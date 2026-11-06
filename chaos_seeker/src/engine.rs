@@ -11,7 +11,7 @@ impl GameState {
             GameProgress::BootMenu { .. } => menu::handler,
             GameProgress::CharacterCreation { .. } => char_create::handler,
             GameProgress::Pause | GameProgress::Unknown => |_| HandlerOutput {
-                progress: GameProgress::Pause,
+                progress: GameProgress::Unknown,
                 ..
             },
         }
