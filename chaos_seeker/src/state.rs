@@ -3,13 +3,12 @@ use tetanes_core::{input::JoypadBtnState, mem::Read, prelude::*};
 
 use crate::handlers;
 
-#[derive(Debug)]
-pub struct ButtonSet {}
+pub type Handler = fn(&mut GameState) -> HandlerOutput;
 
 #[derive(Debug)]
 pub struct HandlerOutput {
     pub progress: GameProgress,
-    pub buttons: ButtonSet = ButtonSet {},
+    pub buttons: JoypadBtnState = JoypadBtnState::empty(),
 }
 
 /// Progress through Final Fantasy 1.
@@ -122,11 +121,18 @@ impl GameState {
         self.screenshot(&filename);
     }
 
-    pub fn tick(&mut self) -> anyhow::Result<u64> {
+    pub fn advance_frame(&mut self, inputs: JoypadBtnState) -> anyhow::Result<u64> {
+        self.control_deck.joypad_mut(Player::One).buttons = inputs;
         let time = self.control_deck.clock_frame()?;
         self.frame += 1;
-
-        self.progress = self.advance_progress();
         Ok(time)
     }
+
+    // pub fn tick(&mut self) -> anyhow::Result<u64> {
+    //     let time = self.control_deck.clock_frame()?;
+    //     self.frame += 1;
+
+    //     self.progress = self.advance_progress();
+    //     Ok(time)
+    // }
 }

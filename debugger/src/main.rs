@@ -94,7 +94,7 @@ impl eframe::App for DebuggerApp {
             let mut frames = 0;
 
             while self.accumulated_time >= frame_time && frames < MAX_FRAMES_PER_UPDATE {
-                self.game.tick().expect("oh no game failed"); // TODO
+                self.game.auto_advance().expect("oh no game failed"); // TODO
                 self.update_emulator_texture(ui.ctx());
                 self.accumulated_time -= frame_time;
                 frames += 1;
@@ -142,7 +142,7 @@ impl eframe::App for DebuggerApp {
                         self.playing = true;
                     }
                     if ui.button("tick").clicked() {
-                        if let Err(error) = self.game.tick() {
+                        if let Err(error) = self.game.auto_advance() {
                             eprintln!("emulator tick failed: {error}");
                         }
 

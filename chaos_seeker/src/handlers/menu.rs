@@ -1,7 +1,7 @@
 use crate::handlers::char_create;
-use crate::state::{BootMenuState, CharacterCreationState, GameProgress, GameState};
+use crate::state::{BootMenuState, CharacterCreationState, GameProgress, GameState, HandlerOutput};
 
-use tetanes_core::{input::JoypadBtnState, mem::Read};
+use tetanes_core::input::JoypadBtnState;
 use tracing::{self, instrument};
 
 /// Address showing cursor position in menu.
@@ -21,19 +21,27 @@ fn at_character_creation(state: &mut GameState) -> bool {
 
 /// Move cursor to new game and hit start.
 #[instrument]
-pub fn handler(state: &mut GameState) -> GameProgress {
+pub fn handler(state: &mut GameState) -> HandlerOutput {
     if at_character_creation(state) {
         tracing::warn!(state.frame, "reached char creation");
-        return GameProgress::CharacterCreation(CharacterCreationState { .. });
+        return HandlerOutput {
+            progress: GameProgress::CharacterCreation(CharacterCreationState { .. }),
+            ..
+        };
     }
 
+    let progress = GameProgress::BootMenu(BootMenuState { .. });
     if cursor_new_game(state) {
         // hit start for new game
-        state.toggle(JoypadBtnState::START);
+        HandlerOutput {
+            progress,
+            buttons: JoypadBtnState::START,
+        }
     } else {
         // move cursor down to new game
-        state.toggle(JoypadBtnState::DOWN);
+        HandlerOutput {
+            progress,
+            buttons: JoypadBtnState::DOWN,
+        }
     }
-
-    GameProgress::BootMenu(BootMenuState { .. })
 }

@@ -2,8 +2,8 @@
 //!
 //! We wait a few frames before hitting the start button.
 
-use crate::state::{BootIntroState, BootMenuState, GameProgress, GameState};
-use tetanes_core::{input::JoypadBtnState, mem::Read};
+use crate::state::{BootIntroState, BootMenuState, GameProgress, GameState, HandlerOutput};
+use tetanes_core::input::JoypadBtnState;
 use tracing::{self, instrument};
 
 /// How long to wait before pressing buttons.
@@ -20,22 +20,29 @@ fn at_main_menu(state: &mut GameState) -> bool {
 
 /// Wait until the cutscene has played a bit, then hit start until we reach the main menu.
 #[instrument]
-pub fn handler(state: &mut GameState) -> GameProgress {
+pub fn handler(state: &mut GameState) -> HandlerOutput {
     let remaining_frames = WAIT_FRAMES.saturating_sub(state.frame);
     // wait for intro to play before hitting buttons
     if state.frame <= WAIT_FRAMES {
-        return GameProgress::BootIntro(BootIntroState { remaining_frames });
+        return HandlerOutput {
+            progress: GameProgress::BootIntro(BootIntroState { remaining_frames }),
+            buttons: JoypadBtnState::empty(),
+        };
     }
 
     if at_main_menu(state) {
         tracing::warn!(state.frame, "reached menu");
         state.screenshot("menu.png");
-        state.set_button(JoypadBtnState::START, false);
 
-        return GameProgress::BootMenu(BootMenuState { .. });
+        return HandlerOutput {
+            progress: GameProgress::BootMenu(BootMenuState { .. }),
+            buttons: JoypadBtnState::empty(),
+        };
+    } else {
+        // hold start button until we reach the main menu
+        HandlerOutput {
+            progress: GameProgress::BootIntro(BootIntroState { remaining_frames }),
+            buttons: JoypadBtnState::START,
+        }
     }
-
-    // toggle start button until we reach the main menu
-    state.toggle(JoypadBtnState::START);
-    GameProgress::BootIntro(BootIntroState { remaining_frames })
 }

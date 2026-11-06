@@ -1,4 +1,4 @@
-use crate::state::{CharacterCreationState, GameProgress, GameState};
+use crate::state::{CharacterCreationState, GameProgress, GameState, HandlerOutput};
 use std::collections::HashMap;
 use tetanes_core::{input::JoypadBtnState, mem::Read};
 
@@ -192,12 +192,11 @@ fn party_complete(state: &mut GameState) -> bool {
     state.read(PARTY_COMPLETE_ADDRESS) == PARTY_COMPLETE_VALUE
 }
 
-/// Navigate towards specified character.
+/// Navigate towards specified character coordinate.
 ///
-/// Returns:
-/// - (true, coords) if at desired character,
-/// - (false, coords) if not there yet.
-fn navigate(state: &mut GameState, target: NameCoordinate) -> (bool, NameCoordinate) {
+/// Returns the buttons to hold to navigate towards the character.
+/// Returns None if the target coordinate is currently selected.
+fn navigate(state: &mut GameState, target: NameCoordinate) -> Option<JoypadBtnState> {
     let current = NameCoordinate::current(state);
 
     let [current_row, current_col] = current.0.to_le_bytes();
@@ -207,88 +206,72 @@ fn navigate(state: &mut GameState, target: NameCoordinate) -> (bool, NameCoordin
     dbg!((&target_row, target_col));
 
     if target_col == current_col && target_row == current_row {
-        return (true, current);
+        return None;
     }
 
     if target_row > current_row {
-        state.toggle(JoypadBtnState::DOWN); // TODO: just press down
+        return Some(JoypadBtnState::DOWN);
     }
 
     if target_col > current_col {
-        state.toggle(JoypadBtnState::RIGHT); // TODO just press right
+        return Some(JoypadBtnState::RIGHT);
     }
 
-    return (false, current);
+    panic!("i'm lost")
 }
 
-pub fn handler(state: &mut GameState) -> GameProgress {
+pub fn handler(state: &mut GameState) -> HandlerOutput {
     let complete: bool = party_complete(state);
     let mode = Mode::current(state);
 
     if let GameProgress::CharacterCreation(previous_state) = state.progress {
         if complete {
-            state.toggle(JoypadBtnState::START);
-
-            return GameProgress::CharacterCreation(CharacterCreationState {
-                party_complete: complete,
-                mode,
-                ..previous_state
-            });
+            return HandlerOutput {
+                progress: GameProgress::CharacterCreation(CharacterCreationState {
+                    party_complete: complete,
+                    mode,
+                    ..previous_state
+                }),
+                buttons: JoypadBtnState::START,
+            };
         }
+
+        let slot = current_slot(state);
+        let (desired_class, desired_name) = STARTING_PARTY
+            .get(slot.expect("failed to retrieve slot") as usize)
+            .expect("slot out of bounds");
+        let current_class = StartingClass::current_class(state);
 
         match mode {
             Some(Mode::SelectName) => {
-                let slot = current_slot(state);
                 let current_name = CurrentName::parse(state);
-                let (_class, desired_name) = STARTING_PARTY
-                    .get(slot.expect("failed to retrieve slot") as usize)
-                    .expect("slot out of bounds");
 
                 dbg!((&slot, &current_name, &desired_name));
+                dbg!(current_name.next_coordinate(desired_name));
+                dbg!(navigate(
+                    state,
+                    current_name.next_coordinate(desired_name).unwrap()
+                ));
 
-                match current_name.next_coordinate(desired_name) {
-                    Some(target) => {
-                        dbg!(&target);
-                        navigate(state, target);
-                        GameProgress::Pause
-                    }
-                    None => GameProgress::Pause,
+                HandlerOutput {
+                    progress: GameProgress::Pause,
+                    ..
                 }
-
-                // TODO: review accumulated name bytes (how?)
-                // TODO: decide if name completed
-                // TODO: retrieve current position + current character
-                // TODO: decide if movement needed
-                // TODO: decide direction if movement is needed
-                // TODO: hit direction if movement is needed
-                // TODO: hit A if character is correct
-                // GameProgress::CharacterCreation(CharacterCreationState {
-                //     party_complete: complete,
-                //     mode,
-                //     ..previous_state
-                // })
             }
-            Some(Mode::SelectClass) => {
-                let slot = current_slot(state);
-                let (desired_class, _desired_name) = STARTING_PARTY
-                    .get(slot.expect("failed to retrieve slot") as usize)
-                    .expect("slot out of bounds");
-                let current_class = StartingClass::current_class(state);
-
-                if current_class.is_some_and(|class| class == *desired_class) {
-                    state.toggle(JoypadBtnState::A);
-                } else {
-                    state.toggle(JoypadBtnState::B);
-                }
-
-                GameProgress::CharacterCreation(CharacterCreationState {
+            Some(Mode::SelectClass) => HandlerOutput {
+                progress: GameProgress::CharacterCreation(CharacterCreationState {
                     party_complete: complete,
                     mode,
                     current_class,
                     slot,
                     ..previous_state
-                })
-            }
+                }),
+                buttons: if current_class.is_some_and(|class| class == *desired_class) {
+                    JoypadBtnState::A
+                } else {
+                    JoypadBtnState::B
+                },
+            },
             None => panic!("invalid character creation mode"),
         }
     } else {
