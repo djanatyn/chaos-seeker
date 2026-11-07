@@ -9,6 +9,7 @@ final fantasy 1 reverse-engineering project with [tetanes_core](https://docs.rs/
 
 ---
 
+<a href="./pathfinding.gif"><img src="./pathfinding.gif"></img></a>
 <a href="./debugger.gif"><img src="./debugger.gif"></img></a>
 
 ---
