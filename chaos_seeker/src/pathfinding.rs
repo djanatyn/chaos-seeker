@@ -15,11 +15,11 @@ pub struct TravelCapabilities {
 }
 
 #[derive(Debug)]
-struct PathProblem<'a> {
-    starting_tile: Coordinate,
-    goal_tile: Coordinate,
-    map: &'a WorldMap,
-    capabilities: TravelCapabilities,
+pub struct PathProblem<'a> {
+    pub starting_tile: Coordinate,
+    pub goal_tile: Coordinate,
+    pub map: &'a WorldMap,
+    pub capabilities: TravelCapabilities,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -48,7 +48,7 @@ impl Ord for SearchTile {
 }
 
 impl PathProblem<'_> {
-    fn solve(&self) -> anyhow::Result<Vec<Coordinate>> {
+    pub fn solve(&self) -> anyhow::Result<Vec<Coordinate>> {
         let mut frontier: BinaryHeap<SearchTile> = BinaryHeap::from([SearchTile {
             coordinate: self.starting_tile,
             cost: 0,

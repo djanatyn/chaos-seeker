@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use image::{imageops, RgbImage};
+use image::{imageops, ImageBuffer, RgbImage, Rgba, RgbaImage};
 
 #[derive(Debug)]
 pub struct WorldMap {
@@ -206,6 +206,44 @@ type MapRow = [Tile; 256];
 pub struct Map([MapRow; 256]);
 
 impl Map {
+    pub fn image(&mut self, table: &TilePropertyTable) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+        let mut img = RgbaImage::new(256, 256);
+
+        for (y, row) in self.0.iter().enumerate() {
+            for (x, tile) in row.iter().enumerate() {
+                let [r, g, b] = tile.color(table);
+                img.put_pixel(x as u32, y as u32, image::Rgba([r, g, b, 255]));
+            }
+        }
+
+        img
+    }
+
+    pub fn pathfinding_image(
+        &self,
+        solution: &[(u8, u8)],
+        table: &TilePropertyTable,
+    ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+        let mut img = RgbaImage::new(256, 256);
+
+        for (y, row) in self.0.iter().enumerate() {
+            for (x, tile) in row.iter().enumerate() {
+                let [r, g, b] = tile.color(table);
+                img.put_pixel(x as u32, y as u32, image::Rgba([r, g, b, 255]));
+            }
+        }
+
+        let last = solution.len().saturating_sub(1).max(1);
+
+        for (idx, &(x, y)) in solution.iter().enumerate() {
+            let t = (idx as u32 * 255 / last as u32) as u8;
+            let color = image::Rgba([t, 255 - t, 255, 255]);
+            img.put_pixel(x as u32, y as u32, color);
+        }
+
+        img
+    }
+
     pub fn save_image(&self, path: &Path, table: &TilePropertyTable) -> anyhow::Result<()> {
         let mut img = RgbImage::new(256, 256);
 

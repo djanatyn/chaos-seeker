@@ -1,5 +1,7 @@
 #![feature(default_field_values)]
 
+use chaos_seeker::pathfinding::{PathProblem, TravelCapabilities};
+use chaos_seeker::overworld::{WorldMap};
 use chaos_seeker::state::{GameProgress, GameState};
 use eframe::egui;
 use std::time::{Duration, Instant};
@@ -26,8 +28,11 @@ enum DebuggerMode {
 struct DebuggerApp {
     game: GameState,
     emulator_texture: Option<egui::TextureHandle> = None,
-    pathfind_x: u8 = 0,
-    pathfind_y: u8 = 0,
+    map_explorer_texture: Option<egui::TextureHandle> = None,
+    map: WorldMap,
+    hover_tile: Option<(i32, i32)> = None,
+    map_source: Option<(u8, u8)> = None,
+    map_target: Option<(u8, u8)> = None,
     playing: bool = false,
     speed: f64 = 0.25,
     last_update: Instant,
@@ -45,9 +50,11 @@ impl DebuggerApp {
             .expect("failed to load ROM");
         control_deck.set_filter(VideoFilter::Pixellate);
 
+        let map = WorldMap::parse(rom).expect("failed to load world map");
         DebuggerApp {
             game: GameState::new(control_deck),
             last_update: Instant::now(),
+            map,
             ..
         }
     }
@@ -69,6 +76,47 @@ impl DebuggerApp {
         } else {
             self.emulator_texture = Some(ctx.load_texture(
                 "emulator-frame",
+                color_image,
+                egui::TextureOptions {
+                    wrap_mode: egui::TextureWrapMode::ClampToEdge,
+                    ..egui::TextureOptions::NEAREST
+                },
+            ));
+        }
+    }
+
+    fn update_map_explorer_texture(&mut self, ctx: &egui::Context) {
+        let mut image = self.map.map.image(&self.map.properties);
+        if let Some(source) = self.map_source && let Some(target) = self.map_target {
+            let solution = PathProblem {
+                starting_tile: source,
+                goal_tile: target,
+                map: &self.map,
+                capabilities: TravelCapabilities {
+                    canoe: true,
+                    ship: false,
+                    airship: false,
+                }
+            };
+
+            if let Ok(path) = solution.solve() {
+                image = self.map.map.pathfinding_image(
+                    &path,
+                    &self.map.properties
+                )
+            }
+        }
+
+        let color_image = egui::ColorImage::from_rgba_unmultiplied(
+            [image.width() as usize, image.height() as usize],
+            image.as_raw(),
+        );
+
+        if let Some(texture) = self.map_explorer_texture.as_mut() {
+            texture.set(color_image, egui::TextureOptions::NEAREST);
+        } else {
+            self.map_explorer_texture = Some(ctx.load_texture(
+                "map-explorer",
                 color_image,
                 egui::TextureOptions {
                     wrap_mode: egui::TextureWrapMode::ClampToEdge,
@@ -115,6 +163,8 @@ impl eframe::App for DebuggerApp {
                 .request_repaint_after(frame_time.saturating_sub(self.accumulated_time));
         }
 
+        self.update_map_explorer_texture(ui.ctx());
+
         egui::Panel::left("tools")
             .min_size(32.0)
             .resizable(true)
@@ -133,6 +183,12 @@ impl eframe::App for DebuggerApp {
                     ui.vertical(|ui| {
                         ui.label("game state");
                         ui.monospace(format!("{:#?}", self.game.progress));
+                    });
+                    ui.vertical(|ui| {
+                        ui.label("map explorer");
+                        ui.monospace(format!("hover_tile: {:#?}", self.hover_tile));
+                        ui.monospace(format!("map_source: {:#?}", self.map_source));
+                        ui.monospace(format!("map_target: {:#?}", self.map_target));
                     });
                 })
             });
@@ -220,8 +276,63 @@ impl eframe::App for DebuggerApp {
                             .scroll_zooms(true)
                             .drag_pan_buttons(egui::DragPanButtons::PRIMARY)
                             .show(ui, &mut self.scene_rect, |ui| {
+                                let (rect, response) = ui.allocate_exact_size(
+                                    egui::Vec2::splat(256.0),
+                                    egui::Sense::hover(),
+                                );
+
+                                if let Some(pos) = response.hover_pos() {
+                                    self.hover_tile =
+                                        Some((pos.x.floor() as i32, pos.y.floor() as i32));
+                                } else {
+                                    self.hover_tile = None;
+                                }
+
+                                let click = ui.input(|i| {
+                                    let pos = i.pointer.interact_pos();
+                                    if i.pointer.button_clicked(egui::PointerButton::Primary) {
+                                        Some((egui::PointerButton::Primary, pos))
+                                    } else if i
+                                        .pointer
+                                        .button_clicked(egui::PointerButton::Secondary)
+                                    {
+                                        Some((egui::PointerButton::Secondary, pos))
+                                    } else {
+                                        None
+                                    }
+                                });
+
+                                if let Some((btn, Some(pos_global))) = click {
+                                    // convert mouse position from screen to scene coordinates
+                                    let from_global = ui
+                                        .ctx()
+                                        .layer_transform_from_global(ui.layer_id())
+                                        .unwrap_or(egui::emath::TSTransform::IDENTITY);
+                                    let scene_pos = from_global * pos_global;
+
+                                    let in_map = scene_pos.x >= 0.0
+                                        && scene_pos.y >= 0.0
+                                        && scene_pos.x < 256.0
+                                        && scene_pos.y < 256.0;
+
+                                    if in_map {
+                                        let tile_x = scene_pos.x.floor() as u8;
+                                        let tile_y = scene_pos.y.floor() as u8;
+
+                                        match btn {
+                                            egui::PointerButton::Primary => {
+                                                self.map_source = Some((tile_x, tile_y))
+                                            }
+                                            egui::PointerButton::Secondary => {
+                                                self.map_target = Some((tile_x, tile_y))
+                                            }
+                                            _ => {}
+                                        }
+                                    }
+                                }
+
                                 ui.painter().image(
-                                    self.emulator_texture.clone().unwrap().id(),
+                                    self.map_explorer_texture.clone().unwrap().id(),
                                     egui::Rect::from_min_size(
                                         egui::Pos2::ZERO,
                                         egui::Vec2::splat(256.0),
