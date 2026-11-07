@@ -17,15 +17,23 @@ fn main() {
     );
 }
 
+#[derive(Debug)]
+enum DebuggerMode {
+    Emulator,
+    MapExplorer,
+}
+
 struct DebuggerApp {
     game: GameState,
     emulator_texture: Option<egui::TextureHandle> = None,
     pathfind_x: u8 = 0,
     pathfind_y: u8 = 0,
     playing: bool = false,
-    speed: f64 = 0.5,
+    speed: f64 = 0.25,
     last_update: Instant,
     accumulated_time: Duration = Duration::ZERO,
+    mode: DebuggerMode = DebuggerMode::Emulator,
+    scene_rect: egui::Rect = egui::Rect::from_min_max(egui::Pos2::ZERO, egui::Pos2::new(256.0, 256.0)),
 }
 
 impl DebuggerApp {
@@ -134,9 +142,15 @@ impl eframe::App for DebuggerApp {
             .resizable(false)
             .show(ui, |ui| {
                 ui.horizontal_centered(|ui| {
-                    let _ = ui.button("world map"); // TODO
-                    let _ = ui.button("emulator"); // TODO
+                    if ui.button("map explorer").clicked() {
+                        self.mode = DebuggerMode::MapExplorer;
+                    }
+                    if ui.button("emulator").clicked() {
+                        self.mode = DebuggerMode::Emulator;
+                    }
+
                     ui.separator();
+
                     if ui.button("play").clicked() {
                         self.playing = true;
                     }
@@ -144,7 +158,6 @@ impl eframe::App for DebuggerApp {
                         if let Err(error) = self.game.auto_advance() {
                             eprintln!("emulator tick failed: {error}");
                         }
-
                         self.update_emulator_texture(ui.ctx());
                     }
                     if ui.button("pause").clicked() {
@@ -153,44 +166,75 @@ impl eframe::App for DebuggerApp {
                 });
             });
 
-        egui::CentralPanel::default()
-            .frame(egui::Frame::NONE)
-            .show(ui, |ui| {
-                if let Some(texture) = &self.emulator_texture {
-                    let native_size = texture.size_vec2();
-                    let available_size = ui.available_size();
+        match self.mode {
+            DebuggerMode::Emulator => {
+                egui::CentralPanel::default()
+                    .frame(egui::Frame::NONE)
+                    .show(ui, |ui| {
+                        if let Some(texture) = &self.emulator_texture {
+                            let native_size = texture.size_vec2();
+                            let available_size = ui.available_size();
 
-                    let fit_scale =
-                        (available_size.x / native_size.x).min(available_size.y / native_size.y);
+                            let fit_scale = (available_size.x / native_size.x)
+                                .min(available_size.y / native_size.y);
 
-                    let scale = if fit_scale >= 1.0 {
-                        fit_scale.floor()
-                    } else {
-                        fit_scale
-                    };
+                            let scale = if fit_scale >= 1.0 {
+                                fit_scale.floor()
+                            } else {
+                                fit_scale
+                            };
 
-                    let display_size = native_size * scale;
+                            let display_size = native_size * scale;
 
-                    // reserve central panel
-                    let (viewport_rect, _) =
-                        ui.allocate_exact_size(available_size, egui::Sense::hover());
+                            // reserve central panel
+                            let (viewport_rect, _) =
+                                ui.allocate_exact_size(available_size, egui::Sense::hover());
 
-                    // center emulator inside central panel
-                    let image_rect =
-                        egui::Rect::from_center_size(viewport_rect.center(), display_size);
+                            // center emulator inside central panel
+                            let image_rect =
+                                egui::Rect::from_center_size(viewport_rect.center(), display_size);
 
-                    // background around viewport
-                    ui.painter()
-                        .rect_filled(viewport_rect, 0.0, egui::Color32::BLACK);
+                            // background around viewport
+                            ui.painter()
+                                .rect_filled(viewport_rect, 0.0, egui::Color32::BLACK);
 
-                    // paint texture appropriately-sized
-                    ui.painter().image(
-                        texture.id(),
-                        image_rect,
-                        egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
-                        egui::Color32::WHITE,
-                    );
-                }
-            });
+                            // paint texture appropriately-sized
+                            ui.painter().image(
+                                texture.id(),
+                                image_rect,
+                                egui::Rect::from_min_max(
+                                    egui::pos2(0.0, 0.0),
+                                    egui::pos2(1.0, 1.0),
+                                ),
+                                egui::Color32::WHITE,
+                            );
+                        }
+                    });
+            }
+            DebuggerMode::MapExplorer => {
+                egui::CentralPanel::default()
+                    .frame(egui::Frame::NONE)
+                    .show(ui, |ui| {
+                        egui::Scene::new()
+                            .zoom_range(1.0..=16.0)
+                            .scroll_zooms(true)
+                            .drag_pan_buttons(egui::DragPanButtons::PRIMARY)
+                            .show(ui, &mut self.scene_rect, |ui| {
+                                ui.painter().image(
+                                    self.emulator_texture.clone().unwrap().id(),
+                                    egui::Rect::from_min_size(
+                                        egui::Pos2::ZERO,
+                                        egui::Vec2::splat(256.0),
+                                    ),
+                                    egui::Rect::from_min_max(
+                                        egui::pos2(0.0, 0.0),
+                                        egui::pos2(1.0, 1.0),
+                                    ),
+                                    egui::Color32::WHITE,
+                                );
+                            });
+                    });
+            }
+        }
     }
 }

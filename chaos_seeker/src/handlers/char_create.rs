@@ -243,9 +243,6 @@ fn navigate(state: &mut GameState, target: NameCoordinate) -> Option<JoypadBtnSt
     let [current_col, current_row] = current.0.to_le_bytes();
     let [target_col, target_row] = target.0.to_le_bytes();
 
-    dbg!((&current_row, &current_col));
-    dbg!((&target_row, target_col));
-
     match target_row.cmp(&current_row) {
         Ordering::Greater => Some(JoypadBtnState::DOWN),
         Ordering::Less => Some(JoypadBtnState::UP),
@@ -316,8 +313,6 @@ pub fn handler(state: &mut GameState) -> HandlerOutput {
                         state.tap(JoypadBtnState::A)
                     }
                 };
-
-                dbg!(&buttons);
 
                 HandlerOutput {
                     progress: GameProgress::CharacterCreation(CharacterCreationState {
