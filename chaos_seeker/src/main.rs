@@ -18,10 +18,10 @@ fn main() -> anyhow::Result<()> {
 
     let mut game = GameState::new(control_deck);
 
-    while game.is_running() {
-        let _ = game.tick();
-        sleep(Duration::from_millis(50));
-    }
+    // while game.is_running() {
+    //     let _ = game.tick();
+    //     sleep(Duration::from_millis(50));
+    // }
 
     Ok(())
 }
