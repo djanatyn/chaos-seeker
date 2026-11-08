@@ -62,6 +62,8 @@ impl DebuggerApp {
 
     /// Advance emulator state.
     fn tick_emulator(&mut self, ui: &mut egui::Ui) {
+        // https://www.nesdev.org/wiki/Cycle_reference_chart
+        // Frame rate (vertical scan rate) [NTSC (2C02)]: 60.0988 Hz 
         const FRAME_RATE: f64 = 60.0988;
         const MAX_FRAMES_PER_UPDATE: usize = 8;
 
