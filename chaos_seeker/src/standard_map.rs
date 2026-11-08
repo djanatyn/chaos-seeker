@@ -1,13 +1,95 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MapTile(u8);
-pub type MapRow = [MapTile; 64];
+pub type Map = [MapTile; 64 * 64];
 
 #[derive(Debug)]
-pub struct StandardMap([MapRow; 64]);
+pub struct StandardMap(Map);
 
 impl StandardMap {
     fn parse(rom: &[u8], offset: &MapOffset) -> anyhow::Result<Self> {
-        todo!()
+        Ok(StandardMap(Parser::new().parse_map(rom, offset)?))
+    }
+}
+
+#[derive(Debug)]
+pub enum ParserState {
+    Null,
+    Repeat(MapTile),
+    Complete,
+}
+
+#[derive(Debug)]
+pub struct Parser {
+    pub accum: Map,
+    pub index: usize,
+    pub state: ParserState,
+}
+
+impl Parser {
+    fn new() -> Self {
+        Parser {
+            accum: [const { MapTile(0) }; 64 * 64],
+            index: 0,
+            state: ParserState::Null,
+        }
+    }
+
+    fn reset(&mut self) {
+        self.index = 0;
+        self.state = ParserState::Null;
+    }
+
+    fn step(&mut self, tile: &u8) -> anyhow::Result<&ParserState> {
+        match self.state {
+            ParserState::Null => match tile {
+                0x00..=0x7F => {
+                    self.accum[self.index] = MapTile(*tile);
+                    self.index += 1;
+                }
+                0x80..=0xFE => {
+                    self.accum[self.index] = MapTile(*tile);
+                    self.state = ParserState::Repeat(MapTile(*tile));
+                    self.index += 1;
+                }
+                0xFF => {
+                    if self.index != 64 * 64 {
+                        Err(anyhow::anyhow!("early end of map"))?;
+                    } else {
+                        self.state = ParserState::Complete;
+                    }
+                }
+            },
+            ParserState::Repeat(ref repeated_tile) => match tile {
+                0x00 => {
+                    todo!("extend to end of row - to 64 tiles?");
+                }
+                0xFF => {
+                    Err(anyhow::anyhow!("unexpected 0xFF"))?;
+                }
+                repetitions => {
+                    let start = self.index - 1;
+                    let end = start + (*repetitions as usize);
+                    self.accum[start..end].fill(repeated_tile.clone());
+                    self.index = end;
+                    self.state = ParserState::Null;
+                }
+            },
+            ParserState::Complete => Err(anyhow::anyhow!("already completed"))?,
+        };
+
+        Ok(&self.state)
+    }
+
+    fn parse_map(mut self, rom: &[u8], offset: &MapOffset) -> anyhow::Result<Map> {
+        let input = &rom[offset.0 as usize..];
+
+        for byte in input.iter() {
+            if let ParserState::Complete = self.step(byte)? {
+                return Ok(self.accum);
+            }
+        }
+
+        Err(anyhow::anyhow!("reached end of input"))
     }
 }
 

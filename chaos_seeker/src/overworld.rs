@@ -342,11 +342,10 @@ impl PointerTable {
     /// Parse the world map entry table from the ROM.
     fn parse(rom: &[u8]) -> anyhow::Result<Self> {
         let starting_offset: usize = 0x4010;
-        let table: [RowPointer; 256] = (0..256)
-            .map(|i| RowPointer::parse(rom, starting_offset + (Self::ROW_POINTER_SIZE * i)))
-            .collect::<anyhow::Result<Vec<RowPointer>>>()?
-            .try_into()
-            .map_err(|e| anyhow::anyhow!("did not find 256 world map row pointers: {e:?}"))?;
+        let table: [RowPointer; 256] = std::array::from_fn(|i| {
+            RowPointer::parse(rom, starting_offset + (Self::ROW_POINTER_SIZE * i))
+                .expect("failed to parse!") // TODO: better error handling
+        });
 
         Ok(PointerTable(table))
     }
