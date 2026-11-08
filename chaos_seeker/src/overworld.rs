@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use image::{imageops, ImageBuffer, RgbImage, Rgba, RgbaImage};
 
@@ -518,7 +518,7 @@ fn test_parse_world_map_entry() -> anyhow::Result<()> {
 
 #[test]
 fn test_parse_overworld() -> anyhow::Result<()> {
-    let rom = std::fs::read("ff1.nes")?;
+    let rom = std::fs::read("../ff1.nes")?;
     let table = PointerTable::parse(&rom)?;
     let (map, length) = TileReader::parse_map(&rom, &table)?;
 
