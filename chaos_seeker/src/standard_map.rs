@@ -2,97 +2,6 @@
 pub struct MapTile(u8);
 pub type Map = [MapTile; 64 * 64];
 
-#[derive(Debug)]
-pub struct StandardMap(Map);
-
-impl StandardMap {
-    fn parse(rom: &[u8], offset: &MapOffset) -> anyhow::Result<Self> {
-        Ok(StandardMap(Parser::new().parse_map(rom, offset)?))
-    }
-}
-
-#[derive(Debug)]
-pub enum ParserState {
-    Null,
-    Repeat(MapTile),
-    Complete,
-}
-
-#[derive(Debug)]
-pub struct Parser {
-    pub accum: Map,
-    pub index: usize,
-    pub state: ParserState,
-}
-
-impl Parser {
-    fn new() -> Self {
-        Parser {
-            accum: [const { MapTile(0) }; 64 * 64],
-            index: 0,
-            state: ParserState::Null,
-        }
-    }
-
-    fn reset(&mut self) {
-        self.index = 0;
-        self.state = ParserState::Null;
-    }
-
-    fn step(&mut self, tile: &u8) -> anyhow::Result<&ParserState> {
-        match self.state {
-            ParserState::Null => match tile {
-                0x00..=0x7F => {
-                    self.accum[self.index] = MapTile(*tile);
-                    self.index += 1;
-                }
-                0x80..=0xFE => {
-                    self.accum[self.index] = MapTile(*tile);
-                    self.state = ParserState::Repeat(MapTile(*tile));
-                    self.index += 1;
-                }
-                0xFF => {
-                    if self.index != 64 * 64 {
-                        Err(anyhow::anyhow!("early end of map"))?;
-                    } else {
-                        self.state = ParserState::Complete;
-                    }
-                }
-            },
-            ParserState::Repeat(ref repeated_tile) => match tile {
-                0x00 => {
-                    todo!("extend to end of row - to 64 tiles?");
-                }
-                0xFF => {
-                    Err(anyhow::anyhow!("unexpected 0xFF"))?;
-                }
-                repetitions => {
-                    let start = self.index - 1;
-                    let end = start + (*repetitions as usize);
-                    self.accum[start..end].fill(repeated_tile.clone());
-                    self.index = end;
-                    self.state = ParserState::Null;
-                }
-            },
-            ParserState::Complete => Err(anyhow::anyhow!("already completed"))?,
-        };
-
-        Ok(&self.state)
-    }
-
-    fn parse_map(mut self, rom: &[u8], offset: &MapOffset) -> anyhow::Result<Map> {
-        let input = &rom[offset.0 as usize..];
-
-        for byte in input.iter() {
-            if let ParserState::Complete = self.step(byte)? {
-                return Ok(self.accum);
-            }
-        }
-
-        Err(anyhow::anyhow!("reached end of input"))
-    }
-}
-
 /// Encoded map offsets:
 /// > Of the 16-bit value, bits 0-13 are the pointer
 /// > within the bank and bits 14-15 select the bank.
@@ -109,6 +18,9 @@ impl Parser {
 /// - 0x8000 (0b11...) selects bank 6 (4 + 2)
 #[derive(Debug)]
 struct MapOffset(u16);
+
+pub const STANDARD_MAP_COUNT: usize = 60;
+pub const MAP_DIMENSIONS: usize = 64;
 
 impl MapOffset {
     pub const SIZE: usize = 2;
@@ -171,12 +83,13 @@ fn test_map_offsets() {
     }
 }
 
+/// Contains MapOffset(0), which is invalid!
 #[derive(Debug)]
-struct MapPointerTable([MapOffset; 64]);
+struct MapPointerTable([MapOffset; STANDARD_MAP_COUNT]);
 
 impl MapPointerTable {
     fn parse(rom: &[u8]) -> anyhow::Result<Self> {
-        let table: [MapOffset; 64] = std::array::from_fn(|i| {
+        let table: [MapOffset; STANDARD_MAP_COUNT] = std::array::from_fn(|i| {
             let offset = MapOffset::STARTING_OFFSET + MapOffset::SIZE * i;
             MapOffset::parse(rom, offset)
         });
@@ -196,7 +109,118 @@ fn test_map_pointer_table() -> anyhow::Result<()> {
 }
 
 #[derive(Debug)]
-pub struct MapAtlas([StandardMap; 64]);
+pub struct StandardMap(Map);
+
+impl StandardMap {
+    fn parse(rom: &[u8], offset: &MapOffset) -> anyhow::Result<Self> {
+        Ok(StandardMap(Parser::new().parse_map(rom, offset)?))
+    }
+}
+
+#[derive(Debug)]
+pub enum ParserState {
+    Null,
+    Repeat(MapTile),
+    Complete,
+}
+
+#[derive(Debug)]
+pub struct Parser {
+    pub accum: Map,
+    pub index: usize,
+    pub state: ParserState,
+}
+
+impl Parser {
+    fn new() -> Self {
+        Parser {
+            accum: [const { MapTile(0) }; MAP_DIMENSIONS.pow(2)],
+            index: 0,
+            state: ParserState::Null,
+        }
+    }
+
+    fn reset(&mut self) {
+        self.index = 0;
+        self.state = ParserState::Null;
+    }
+
+    fn step(&mut self, tile: &u8) -> anyhow::Result<&ParserState> {
+        match self.state {
+            ParserState::Null => match tile {
+                0x00..=0x7F => {
+                    self.accum[self.index] = MapTile(*tile);
+                    self.index += 1;
+                }
+                0x80..=0xFE => {
+                    self.accum[self.index] = MapTile(*tile & 0x7F);
+                    self.state = ParserState::Repeat(MapTile(*tile & 0x7F));
+                    self.index += 1;
+                }
+                0xFF => {
+                    if self.index != MAP_DIMENSIONS.pow(2) {
+                        Err(anyhow::anyhow!("early end of map"))?;
+                    } else {
+                        self.state = ParserState::Complete;
+                    }
+                }
+            },
+            ParserState::Repeat(ref repeated_tile) => {
+                let repetitions: usize = match tile {
+                    0x00 => 256,
+                    repetitions => *repetitions as usize,
+                };
+
+                let start = self.index - 1;
+                let end = start + repetitions;
+                dbg!((&self.index, &repetitions, start, end));
+                if end > MAP_DIMENSIONS.pow(2) {
+                    Err(anyhow::anyhow!(
+                        "repetition count out of range: {repetitions:#04x} ({repetitions})"
+                    ))?
+                }
+
+                self.accum[start..end].fill(repeated_tile.clone());
+                self.index = end;
+                self.state = ParserState::Null;
+            }
+            ParserState::Complete => Err(anyhow::anyhow!("already completed"))?,
+        };
+
+        Ok(&self.state)
+    }
+
+    fn parse_map(mut self, rom: &[u8], offset: &MapOffset) -> anyhow::Result<Map> {
+        let input = &rom[offset.to_rom_offset()..];
+
+        for byte in input.iter() {
+            if let ParserState::Complete = self.step(byte)? {
+                return Ok(self.accum);
+            }
+        }
+
+        Err(anyhow::anyhow!("reached end of input"))
+    }
+}
+
+#[test]
+fn test_parse_maps() -> anyhow::Result<()> {
+    let rom = std::fs::read("../ff1.nes")?;
+    let table = MapPointerTable::parse(&rom)?;
+
+    let maps: Vec<StandardMap> = table
+        .0
+        .iter()
+        .map(|offset| StandardMap::parse(&rom, offset))
+        .collect::<anyhow::Result<Vec<StandardMap>>>()?;
+
+    insta::assert_compact_debug_snapshot!(maps);
+
+    Ok(())
+}
+
+#[derive(Debug)]
+pub struct MapAtlas([StandardMap; STANDARD_MAP_COUNT]);
 
 impl MapAtlas {
     fn parse(rom: &[u8], table: &MapPointerTable) -> anyhow::Result<Self> {
