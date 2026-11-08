@@ -29,8 +29,17 @@ impl StandardMap {
 struct MapOffset(u16);
 
 impl MapOffset {
+    pub const SIZE: usize = 2;
     pub const ROM_HEADER_SIZE: usize = 0x10;
     pub const BANK_SIZE: usize = 0x4000;
+
+    pub const STARTING_BANK: usize = 0x4;
+    pub const STARTING_OFFSET: usize =
+        Self::ROM_HEADER_SIZE + (Self::BANK_SIZE * Self::STARTING_BANK);
+
+    fn parse(rom: &[u8], offset: usize) -> Self {
+        MapOffset(u16::from_le_bytes([rom[offset], rom[offset + 1]]))
+    }
 
     /// bits 14-15 select the bank
     fn bank(&self) -> usize {
@@ -85,8 +94,27 @@ struct MapPointerTable([MapOffset; 64]);
 
 impl MapPointerTable {
     fn parse(rom: &[u8]) -> anyhow::Result<Self> {
-        todo!()
+        let table: [MapOffset; 64] = (0..64)
+            .map(|i| {
+                let offset = MapOffset::STARTING_OFFSET + MapOffset::SIZE * i;
+                MapOffset::parse(rom, offset)
+            })
+            .collect::<Vec<MapOffset>>()
+            .try_into()
+            .map_err(|e| anyhow::anyhow!("did not find 64 map offsets: {e:?}"))?;
+
+        Ok(MapPointerTable(table))
     }
+}
+
+#[test]
+fn test_map_pointer_table() -> anyhow::Result<()> {
+    let rom = std::fs::read("../ff1.nes")?;
+    let table = MapPointerTable::parse(&rom)?;
+
+    insta::assert_compact_debug_snapshot!(table);
+
+    Ok(())
 }
 
 #[derive(Debug)]
