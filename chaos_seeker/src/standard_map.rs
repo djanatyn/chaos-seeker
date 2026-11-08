@@ -1,6 +1,24 @@
+use image::{imageops, ImageBuffer, Rgba, RgbaImage};
+
+use crate::overworld::TilePropertyTable;
+
+pub const STANDARD_MAP_COUNT: usize = 60;
+pub const MAP_DIMENSIONS: usize = 64;
+
 #[derive(Debug, Clone)]
 pub struct MapTile(u8);
-pub type Map = [MapTile; 64 * 64];
+
+impl MapTile {
+    fn color(&self, table: &TilePropertyTable) -> [u8; 3] {
+        if let Some(properties) = table.lookup(self.0) {
+            properties.color()
+        } else {
+            [0, 0, 0]
+        }
+    }
+}
+
+pub type Map = [MapTile; MAP_DIMENSIONS.pow(2)];
 
 /// Encoded map offsets:
 /// > Of the 16-bit value, bits 0-13 are the pointer
@@ -18,9 +36,6 @@ pub type Map = [MapTile; 64 * 64];
 /// - 0x8000 (0b11...) selects bank 6 (4 + 2)
 #[derive(Debug)]
 struct MapOffset(u16);
-
-pub const STANDARD_MAP_COUNT: usize = 60;
-pub const MAP_DIMENSIONS: usize = 64;
 
 impl MapOffset {
     pub const SIZE: usize = 2;
@@ -114,6 +129,41 @@ pub struct StandardMap(Map);
 impl StandardMap {
     fn parse(rom: &[u8], offset: &MapOffset) -> anyhow::Result<Self> {
         Ok(StandardMap(Parser::new().parse_map(rom, offset)?))
+    }
+
+    pub fn scaled_image(
+        &self,
+        scale: u32,
+        table: &TilePropertyTable,
+    ) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+        let size = MAP_DIMENSIONS as u32;
+        let mut img = RgbaImage::new(size, size);
+
+        for (idx, tile) in self.0.iter().enumerate() {
+            let (x, y) = ((idx as u32).rem_euclid(size), (idx as u32).div_euclid(size));
+            let [r, g, b] = tile.color(table);
+            img.put_pixel(x as u32, y as u32, Rgba([r, g, b, 255]));
+        }
+
+        imageops::resize(
+            &img,
+            size * scale,
+            size * scale,
+            imageops::FilterType::Nearest,
+        )
+    }
+
+    pub fn image(&self, table: &TilePropertyTable) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+        let size = MAP_DIMENSIONS as u32;
+        let mut img = RgbaImage::new(size, size);
+
+        for (idx, tile) in self.0.iter().enumerate() {
+            let (x, y) = ((idx as u32).rem_euclid(size), (idx as u32).div_euclid(size));
+            let [r, g, b] = tile.color(table);
+            img.put_pixel(x as u32, y as u32, Rgba([r, g, b, 255]));
+        }
+
+        img
     }
 }
 
@@ -215,6 +265,13 @@ fn test_parse_maps() -> anyhow::Result<()> {
         .collect::<anyhow::Result<Vec<StandardMap>>>()?;
 
     insta::assert_compact_debug_snapshot!(maps);
+
+    let properties = TilePropertyTable::load(&rom)?;
+
+    for (idx, map) in maps.iter().enumerate() {
+        map.scaled_image(4, &properties)
+            .save(format!("../images/map_{idx:02}.png"))?
+    }
 
     Ok(())
 }

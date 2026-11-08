@@ -22,7 +22,7 @@ impl WorldMap {
     }
 
     pub fn lookup(&self, tile: &Tile) -> Option<&TileProperties> {
-        self.properties.lookup(tile)
+        self.properties.lookup(tile.0)
     }
 }
 
@@ -147,7 +147,7 @@ impl TileProperties {
         }
     }
 
-    fn color(&self) -> [u8; 3] {
+    pub fn color(&self) -> [u8; 3] {
         match self {
             tile if tile.walk_allowed() => [0, 173, 0],
             tile if tile.canoe_allowed() => [7, 173, 189],
@@ -167,7 +167,7 @@ impl TilePropertyTable {
     const TILE_PROPERTY_SIZE: usize = 2;
     const NUM_TILES: usize = 128;
 
-    fn load(rom: &[u8]) -> anyhow::Result<Self> {
+    pub fn load(rom: &[u8]) -> anyhow::Result<Self> {
         let start: usize = Self::WORLD_TILE_PROPERTIES_OFFSET;
         let table: [TileProperties; 128] = (0..Self::NUM_TILES)
             .map(|idx| {
@@ -183,8 +183,8 @@ impl TilePropertyTable {
         Ok(TilePropertyTable(table))
     }
 
-    fn lookup(&self, tile: &Tile) -> Option<&TileProperties> {
-        self.0.get(tile.0 as usize)
+    pub fn lookup(&self, tile: u8) -> Option<&TileProperties> {
+        self.0.get(tile as usize)
     }
 }
 
@@ -192,7 +192,7 @@ impl TilePropertyTable {
 pub struct Tile(u8);
 impl Tile {
     fn color(&self, table: &TilePropertyTable) -> [u8; 3] {
-        if let Some(properties) = table.lookup(self) {
+        if let Some(properties) = table.lookup(self.0) {
             properties.color()
         } else {
             [0, 0, 0]
