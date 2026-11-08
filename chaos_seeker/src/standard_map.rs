@@ -94,14 +94,10 @@ struct MapPointerTable([MapOffset; 64]);
 
 impl MapPointerTable {
     fn parse(rom: &[u8]) -> anyhow::Result<Self> {
-        let table: [MapOffset; 64] = (0..64)
-            .map(|i| {
-                let offset = MapOffset::STARTING_OFFSET + MapOffset::SIZE * i;
-                MapOffset::parse(rom, offset)
-            })
-            .collect::<Vec<MapOffset>>()
-            .try_into()
-            .map_err(|e| anyhow::anyhow!("did not find 64 map offsets: {e:?}"))?;
+        let table: [MapOffset; 64] = std::array::from_fn(|i| {
+            let offset = MapOffset::STARTING_OFFSET + MapOffset::SIZE * i;
+            MapOffset::parse(rom, offset)
+        });
 
         Ok(MapPointerTable(table))
     }
