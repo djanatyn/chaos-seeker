@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use image::{imageops, ImageBuffer, RgbImage, Rgba, RgbaImage};
+use image::{ImageBuffer, RgbImage, Rgba, RgbaImage, imageops};
 
 #[derive(Debug)]
 pub struct WorldMap {

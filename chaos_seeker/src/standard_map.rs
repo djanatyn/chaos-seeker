@@ -1,4 +1,4 @@
-use image::{imageops, ImageBuffer, Rgba, RgbaImage};
+use image::{ImageBuffer, Rgba, RgbaImage, imageops};
 
 use crate::overworld::TilePropertyTable;
 

@@ -1,7 +1,7 @@
 #![feature(default_field_values)]
 
+use chaos_seeker::overworld::WorldMap;
 use chaos_seeker::pathfinding::{PathProblem, TravelCapabilities};
-use chaos_seeker::overworld::{WorldMap};
 use chaos_seeker::state::{GameProgress, GameState};
 use eframe::egui;
 use std::time::{Duration, Instant};
@@ -19,7 +19,7 @@ fn main() {
     );
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum DebuggerMode {
     Emulator,
     MapExplorer,
@@ -29,6 +29,7 @@ struct DebuggerApp {
     game: GameState,
     emulator_texture: Option<egui::TextureHandle> = None,
     map_explorer_texture: Option<egui::TextureHandle> = None,
+    map_explorer_texture_needs_update: bool = true,
     map: WorldMap,
     hover_tile: Option<(i32, i32)> = None,
     map_source: Option<(u8, u8)> = None,
@@ -87,7 +88,9 @@ impl DebuggerApp {
 
     fn update_map_explorer_texture(&mut self, ctx: &egui::Context) {
         let mut image = self.map.map.image(&self.map.properties);
-        if let Some(source) = self.map_source && let Some(target) = self.map_target {
+        if let Some(source) = self.map_source
+            && let Some(target) = self.map_target
+        {
             let solution = PathProblem {
                 starting_tile: source,
                 goal_tile: target,
@@ -96,14 +99,11 @@ impl DebuggerApp {
                     canoe: true,
                     ship: false,
                     airship: false,
-                }
+                },
             };
 
             if let Ok(path) = solution.solve() {
-                image = self.map.map.pathfinding_image(
-                    &path,
-                    &self.map.properties
-                )
+                image = self.map.map.pathfinding_image(&path, &self.map.properties)
             }
         }
 
@@ -163,7 +163,10 @@ impl eframe::App for DebuggerApp {
                 .request_repaint_after(frame_time.saturating_sub(self.accumulated_time));
         }
 
-        self.update_map_explorer_texture(ui.ctx());
+        if self.mode == DebuggerMode::MapExplorer && self.map_explorer_texture_needs_update {
+            self.update_map_explorer_texture(ui.ctx());
+            self.map_explorer_texture_needs_update = false;
+        }
 
         egui::Panel::left("tools")
             .min_size(32.0)
@@ -321,9 +324,11 @@ impl eframe::App for DebuggerApp {
 
                                         match btn {
                                             egui::PointerButton::Primary => {
+                                                self.map_explorer_texture_needs_update = true;
                                                 self.map_source = Some((tile_x, tile_y))
                                             }
                                             egui::PointerButton::Secondary => {
+                                                self.map_explorer_texture_needs_update = true;
                                                 self.map_target = Some((tile_x, tile_y))
                                             }
                                             _ => {}
@@ -331,18 +336,14 @@ impl eframe::App for DebuggerApp {
                                     }
                                 }
 
-                                ui.painter().image(
-                                    self.map_explorer_texture.clone().unwrap().id(),
-                                    egui::Rect::from_min_size(
-                                        egui::Pos2::ZERO,
-                                        egui::Vec2::splat(256.0),
-                                    ),
-                                    egui::Rect::from_min_max(
-                                        egui::pos2(0.0, 0.0),
-                                        egui::pos2(1.0, 1.0),
-                                    ),
-                                    egui::Color32::WHITE,
+                                let full_uv = egui::Rect::from_min_max(
+                                    egui::pos2(0.0, 0.0),
+                                    egui::pos2(1.0, 1.0),
                                 );
+                                let texture_id = self.map_explorer_texture.as_ref().map(|t| t.id());
+                                if let Some(id) = texture_id {
+                                    ui.painter().image(id, rect, full_uv, egui::Color32::WHITE);
+                                }
                             });
                     });
             }
