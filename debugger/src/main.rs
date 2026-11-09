@@ -63,7 +63,7 @@ impl DebuggerApp {
     /// Advance emulator state.
     fn tick_emulator(&mut self, ui: &mut egui::Ui) {
         // https://www.nesdev.org/wiki/Cycle_reference_chart
-        // Frame rate (vertical scan rate) [NTSC (2C02)]: 60.0988 Hz 
+        // Frame rate (vertical scan rate) [NTSC (2C02)]: 60.0988 Hz
         const FRAME_RATE: f64 = 60.0988;
         const MAX_FRAMES_PER_UPDATE: usize = 8;
 
@@ -97,7 +97,6 @@ impl DebuggerApp {
             ui.ctx()
                 .request_repaint_after(frame_time.saturating_sub(self.accumulated_time));
         }
-
     }
 
     fn toolbar(&mut self, ui: &mut egui::Ui) {
@@ -129,7 +128,6 @@ impl DebuggerApp {
                     }
                 });
             });
-
     }
 
     fn left_panel(&mut self, ui: &mut egui::Ui) {
@@ -170,8 +168,8 @@ impl DebuggerApp {
                     let native_size = texture.size_vec2();
                     let available_size = ui.available_size();
 
-                    let fit_scale = (available_size.x / native_size.x)
-                        .min(available_size.y / native_size.y);
+                    let fit_scale =
+                        (available_size.x / native_size.x).min(available_size.y / native_size.y);
 
                     let scale = if fit_scale >= 1.0 {
                         fit_scale.floor()
@@ -197,10 +195,7 @@ impl DebuggerApp {
                     ui.painter().image(
                         texture.id(),
                         image_rect,
-                        egui::Rect::from_min_max(
-                            egui::pos2(0.0, 0.0),
-                            egui::pos2(1.0, 1.0),
-                        ),
+                        egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
                         egui::Color32::WHITE,
                     );
                 }
@@ -216,14 +211,11 @@ impl DebuggerApp {
                     .scroll_zooms(true)
                     .drag_pan_buttons(egui::DragPanButtons::PRIMARY)
                     .show(ui, &mut self.scene_rect, |ui| {
-                        let (rect, response) = ui.allocate_exact_size(
-                            egui::Vec2::splat(256.0),
-                            egui::Sense::hover(),
-                        );
+                        let (rect, response) =
+                            ui.allocate_exact_size(egui::Vec2::splat(256.0), egui::Sense::hover());
 
                         if let Some(pos) = response.hover_pos() {
-                            self.hover_tile =
-                                Some((pos.x.floor() as i32, pos.y.floor() as i32));
+                            self.hover_tile = Some((pos.x.floor() as i32, pos.y.floor() as i32));
                         } else {
                             self.hover_tile = None;
                         }
@@ -232,10 +224,7 @@ impl DebuggerApp {
                             let pos = i.pointer.interact_pos();
                             if i.pointer.button_clicked(egui::PointerButton::Primary) {
                                 Some((egui::PointerButton::Primary, pos))
-                            } else if i
-                                .pointer
-                                .button_clicked(egui::PointerButton::Secondary)
-                            {
+                            } else if i.pointer.button_clicked(egui::PointerButton::Secondary) {
                                 Some((egui::PointerButton::Secondary, pos))
                             } else {
                                 None
@@ -273,10 +262,8 @@ impl DebuggerApp {
                             }
                         }
 
-                        let full_uv = egui::Rect::from_min_max(
-                            egui::pos2(0.0, 0.0),
-                            egui::pos2(1.0, 1.0),
-                        );
+                        let full_uv =
+                            egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
                         let texture_id = self.map_explorer_texture.as_ref().map(|t| t.id());
                         if let Some(id) = texture_id {
                             ui.painter().image(id, rect, full_uv, egui::Color32::WHITE);
@@ -361,8 +348,8 @@ impl eframe::App for DebuggerApp {
             DebuggerMode::Emulator => {
                 self.tick_emulator(ui);
                 self.emulator_view(ui);
-            },
-            DebuggerMode::MapExplorer  => {
+            }
+            DebuggerMode::MapExplorer => {
                 if self.map_explorer_texture_needs_update {
                     self.update_map_explorer_texture(ui.ctx());
                     self.map_explorer_texture_needs_update = false;
@@ -370,6 +357,5 @@ impl eframe::App for DebuggerApp {
                 self.map_explorer_view(ui);
             }
         }
-
     }
 }

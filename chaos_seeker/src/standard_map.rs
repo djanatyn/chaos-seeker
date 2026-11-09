@@ -2,13 +2,13 @@ use image::{ImageBuffer, Rgba, RgbaImage, imageops};
 
 use crate::overworld::TilePropertyTable;
 
-pub const STANDARD_MAP_COUNT: usize = 60;
+pub const STANDARD_MAP_COUNT: usize = 61;
 pub const MAP_DIMENSIONS: usize = 64;
 
 #[derive(Debug, Clone)]
-pub struct MapTile(u8);
+pub struct Tile(u8);
 
-impl MapTile {
+impl Tile {
     fn color(&self, table: &TilePropertyTable) -> [u8; 3] {
         if let Some(properties) = table.lookup(self.0) {
             properties.color()
@@ -18,7 +18,7 @@ impl MapTile {
     }
 }
 
-pub type Map = [MapTile; MAP_DIMENSIONS.pow(2)];
+pub type Map = [Tile; MAP_DIMENSIONS.pow(2)];
 
 /// Encoded map offsets:
 /// > Of the 16-bit value, bits 0-13 are the pointer
@@ -170,7 +170,7 @@ impl StandardMap {
 #[derive(Debug)]
 pub enum ParserState {
     Null,
-    Repeat(MapTile),
+    Repeat(Tile),
     Complete,
 }
 
@@ -184,7 +184,7 @@ pub struct Parser {
 impl Parser {
     fn new() -> Self {
         Parser {
-            accum: [const { MapTile(0) }; MAP_DIMENSIONS.pow(2)],
+            accum: [const { Tile(0) }; MAP_DIMENSIONS.pow(2)],
             index: 0,
             state: ParserState::Null,
         }
@@ -199,12 +199,12 @@ impl Parser {
         match self.state {
             ParserState::Null => match tile {
                 0x00..=0x7F => {
-                    self.accum[self.index] = MapTile(*tile);
+                    self.accum[self.index] = Tile(*tile);
                     self.index += 1;
                 }
                 0x80..=0xFE => {
-                    self.accum[self.index] = MapTile(*tile & 0x7F);
-                    self.state = ParserState::Repeat(MapTile(*tile & 0x7F));
+                    self.accum[self.index] = Tile(*tile & 0x7F);
+                    self.state = ParserState::Repeat(Tile(*tile & 0x7F));
                     self.index += 1;
                 }
                 0xFF => {
@@ -223,7 +223,6 @@ impl Parser {
 
                 let start = self.index - 1;
                 let end = start + repetitions;
-                dbg!((&self.index, &repetitions, start, end));
                 if end > MAP_DIMENSIONS.pow(2) {
                     Err(anyhow::anyhow!(
                         "repetition count out of range: {repetitions:#04x} ({repetitions})"
@@ -256,19 +255,10 @@ impl Parser {
 #[test]
 fn test_parse_maps() -> anyhow::Result<()> {
     let rom = std::fs::read("../ff1.nes")?;
-    let table = MapPointerTable::parse(&rom)?;
-
-    let maps: Vec<StandardMap> = table
-        .0
-        .iter()
-        .map(|offset| StandardMap::parse(&rom, offset))
-        .collect::<anyhow::Result<Vec<StandardMap>>>()?;
-
-    insta::assert_compact_debug_snapshot!(maps);
-
+    let atlas = MapAtlas::parse(&rom)?;
     let properties = TilePropertyTable::load(&rom)?;
 
-    for (idx, map) in maps.iter().enumerate() {
+    for (idx, map) in atlas.0.iter().enumerate() {
         map.scaled_image(4, &properties)
             .save(format!("../images/map_{idx:02}.png"))?
     }
@@ -276,11 +266,26 @@ fn test_parse_maps() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// All maps, decoded and indexed.
 #[derive(Debug)]
-pub struct MapAtlas([StandardMap; STANDARD_MAP_COUNT]);
+pub struct MapAtlas(Box<[StandardMap; STANDARD_MAP_COUNT]>);
 
 impl MapAtlas {
-    fn parse(rom: &[u8], table: &MapPointerTable) -> anyhow::Result<Self> {
-        todo!()
+    pub fn parse(rom: &[u8]) -> anyhow::Result<Self> {
+        let table = MapPointerTable::parse(&rom)?;
+        let all_maps = table
+            .0
+            .iter()
+            .map(|offset| StandardMap::parse(rom, offset))
+            .collect::<anyhow::Result<Vec<StandardMap>>>()?;
+
+        let maps: Box<[StandardMap; STANDARD_MAP_COUNT]> = all_maps
+            .into_boxed_slice()
+            .try_into()
+            .map_err(|v: Box<[StandardMap]>| {
+            anyhow::anyhow!("did not find all maps: {}", v.len())
+        })?;
+
+        Ok(MapAtlas(maps))
     }
 }
