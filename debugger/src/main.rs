@@ -25,21 +25,29 @@ enum DebuggerMode {
     MapExplorer,
 }
 
-struct DebuggerApp {
-    game: GameState,
-    emulator_texture: Option<egui::TextureHandle> = None,
-    map_explorer_texture: Option<egui::TextureHandle> = None,
-    map_explorer_texture_needs_update: bool = true,
-    map: WorldMap,
+struct MapExplorerState {
+    world_map: WorldMap,
+    map_explorer_zoomable: egui::Rect = egui::Rect::from_min_max(egui::Pos2::ZERO, egui::Pos2::new(256.0, 256.0)),
+    texture: Option<egui::TextureHandle> = None,
+    texture_dirty: bool = true,
     hover_tile: Option<(i32, i32)> = None,
-    map_source: Option<(u8, u8)> = None,
-    map_target: Option<(u8, u8)> = None,
+    pathfind_source: Option<(u8, u8)> = None,
+    pathfind_target: Option<(u8, u8)> = None,
+ }
+
+struct EmulatorState {
+    game: GameState,
+    last_update: Instant,
+    texture: Option<egui::TextureHandle> = None,
     playing: bool = false,
     speed: f64 = 0.25,
-    last_update: Instant,
     accumulated_time: Duration = Duration::ZERO,
+}
+
+struct DebuggerApp {
+    emulator: EmulatorState,
+    map_explorer: MapExplorerState,
     mode: DebuggerMode = DebuggerMode::Emulator,
-    scene_rect: egui::Rect = egui::Rect::from_min_max(egui::Pos2::ZERO, egui::Pos2::new(256.0, 256.0)),
 }
 
 impl DebuggerApp {
@@ -53,9 +61,12 @@ impl DebuggerApp {
 
         let map = WorldMap::parse(rom).expect("failed to load world map");
         DebuggerApp {
-            game: GameState::new(control_deck),
-            last_update: Instant::now(),
-            map,
+            emulator: EmulatorState {
+                game: GameState::new(control_deck),
+                last_update: Instant::now(),
+                ..
+            },
+            map_explorer: MapExplorerState { world_map: map, .. },
             ..
         }
     }
@@ -71,31 +82,34 @@ impl DebuggerApp {
 
         let now = Instant::now();
         let elapsed = now
-            .duration_since(self.last_update)
+            .duration_since(self.emulator.last_update)
             .min(Duration::from_millis(250));
-        self.last_update = now;
+        self.emulator.last_update = now;
 
-        if self.playing {
-            self.accumulated_time += elapsed.mul_f64(self.speed);
+        if self.emulator.playing {
+            self.emulator.accumulated_time += elapsed.mul_f64(self.emulator.speed);
 
             let mut frames = 0;
 
-            while self.accumulated_time >= frame_time && frames < MAX_FRAMES_PER_UPDATE {
-                self.game.auto_advance().expect("oh no game failed"); // TODO
-                if self.game.progress == GameProgress::Pause {
-                    self.playing = false;
+            while self.emulator.accumulated_time >= frame_time && frames < MAX_FRAMES_PER_UPDATE {
+                self.emulator
+                    .game
+                    .auto_advance()
+                    .expect("oh no game failed"); // TODO
+                if self.emulator.game.progress == GameProgress::Pause {
+                    self.emulator.playing = false;
                 }
                 self.update_emulator_texture(ui.ctx());
-                self.accumulated_time -= frame_time;
+                self.emulator.accumulated_time -= frame_time;
                 frames += 1;
             }
 
             if frames == MAX_FRAMES_PER_UPDATE {
-                self.accumulated_time = Duration::ZERO;
+                self.emulator.accumulated_time = Duration::ZERO;
             }
 
             ui.ctx()
-                .request_repaint_after(frame_time.saturating_sub(self.accumulated_time));
+                .request_repaint_after(frame_time.saturating_sub(self.emulator.accumulated_time));
         }
     }
 
@@ -115,16 +129,16 @@ impl DebuggerApp {
                     ui.separator();
 
                     if ui.button("play").clicked() {
-                        self.playing = true;
+                        self.emulator.playing = true;
                     }
                     if ui.button("tick").clicked() {
-                        if let Err(error) = self.game.auto_advance() {
+                        if let Err(error) = self.emulator.game.auto_advance() {
                             eprintln!("emulator tick failed: {error}");
                         }
                         self.update_emulator_texture(ui.ctx());
                     }
                     if ui.button("pause").clicked() {
-                        self.playing = false;
+                        self.emulator.playing = false;
                     }
                 });
             });
@@ -143,18 +157,24 @@ impl DebuggerApp {
                     // });
                     ui.vertical(|ui| {
                         ui.label("game speed");
-                        ui.add(egui::Slider::new(&mut self.speed, 0.0..=4.0));
+                        ui.add(egui::Slider::new(&mut self.emulator.speed, 0.0..=4.0));
                     });
                     ui.separator();
                     ui.vertical(|ui| {
                         ui.label("game state");
-                        ui.monospace(format!("{:#?}", self.game.progress));
+                        ui.monospace(format!("{:#?}", self.emulator.game.progress));
                     });
                     ui.vertical(|ui| {
                         ui.label("map explorer");
-                        ui.monospace(format!("hover_tile: {:#?}", self.hover_tile));
-                        ui.monospace(format!("map_source: {:#?}", self.map_source));
-                        ui.monospace(format!("map_target: {:#?}", self.map_target));
+                        ui.monospace(format!("hover_tile: {:#?}", self.map_explorer.hover_tile));
+                        ui.monospace(format!(
+                            "map_source: {:#?}",
+                            self.map_explorer.pathfind_source
+                        ));
+                        ui.monospace(format!(
+                            "map_target: {:#?}",
+                            self.map_explorer.pathfind_target
+                        ));
                     });
                 })
             });
@@ -164,7 +184,7 @@ impl DebuggerApp {
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE)
             .show(ui, |ui| {
-                if let Some(texture) = &self.emulator_texture {
+                if let Some(texture) = &self.emulator.texture {
                     let native_size = texture.size_vec2();
                     let available_size = ui.available_size();
 
@@ -210,14 +230,15 @@ impl DebuggerApp {
                     .zoom_range(1.0..=16.0)
                     .scroll_zooms(true)
                     .drag_pan_buttons(egui::DragPanButtons::PRIMARY)
-                    .show(ui, &mut self.scene_rect, |ui| {
+                    .show(ui, &mut self.map_explorer.map_explorer_zoomable, |ui| {
                         let (rect, response) =
                             ui.allocate_exact_size(egui::Vec2::splat(256.0), egui::Sense::hover());
 
                         if let Some(pos) = response.hover_pos() {
-                            self.hover_tile = Some((pos.x.floor() as i32, pos.y.floor() as i32));
+                            self.map_explorer.hover_tile =
+                                Some((pos.x.floor() as i32, pos.y.floor() as i32));
                         } else {
-                            self.hover_tile = None;
+                            self.map_explorer.hover_tile = None;
                         }
 
                         let click = ui.input(|i| {
@@ -250,12 +271,12 @@ impl DebuggerApp {
 
                                 match btn {
                                     egui::PointerButton::Primary => {
-                                        self.map_explorer_texture_needs_update = true;
-                                        self.map_source = Some((tile_x, tile_y))
+                                        self.map_explorer.texture_dirty = true;
+                                        self.map_explorer.pathfind_source = Some((tile_x, tile_y))
                                     }
                                     egui::PointerButton::Secondary => {
-                                        self.map_explorer_texture_needs_update = true;
-                                        self.map_target = Some((tile_x, tile_y))
+                                        self.map_explorer.texture_dirty = true;
+                                        self.map_explorer.pathfind_target = Some((tile_x, tile_y))
                                     }
                                     _ => {}
                                 }
@@ -264,7 +285,7 @@ impl DebuggerApp {
 
                         let full_uv =
                             egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
-                        let texture_id = self.map_explorer_texture.as_ref().map(|t| t.id());
+                        let texture_id = self.map_explorer.texture.as_ref().map(|t| t.id());
                         if let Some(id) = texture_id {
                             ui.painter().image(id, rect, full_uv, egui::Color32::WHITE);
                         }
@@ -275,7 +296,7 @@ impl DebuggerApp {
 
 impl DebuggerApp {
     fn update_emulator_texture(&mut self, ctx: &egui::Context) {
-        let Some(image) = self.game.image() else {
+        let Some(image) = self.emulator.game.image() else {
             return;
         };
 
@@ -284,10 +305,10 @@ impl DebuggerApp {
             image.as_raw(),
         );
 
-        if let Some(texture) = self.emulator_texture.as_mut() {
+        if let Some(texture) = self.emulator.texture.as_mut() {
             texture.set(color_image, egui::TextureOptions::NEAREST);
         } else {
-            self.emulator_texture = Some(ctx.load_texture(
+            self.emulator.texture = Some(ctx.load_texture(
                 "emulator-frame",
                 color_image,
                 egui::TextureOptions {
@@ -299,14 +320,18 @@ impl DebuggerApp {
     }
 
     fn update_map_explorer_texture(&mut self, ctx: &egui::Context) {
-        let mut image = self.map.map.image(&self.map.properties);
-        if let Some(source) = self.map_source
-            && let Some(target) = self.map_target
+        let mut image = self
+            .map_explorer
+            .world_map
+            .map
+            .image(&self.map_explorer.world_map.properties);
+        if let Some(source) = self.map_explorer.pathfind_source
+            && let Some(target) = self.map_explorer.pathfind_target
         {
             let solution = PathProblem {
                 starting_tile: source,
                 goal_tile: target,
-                map: &self.map,
+                map: &self.map_explorer.world_map,
                 capabilities: TravelCapabilities {
                     canoe: true,
                     ship: false,
@@ -315,7 +340,11 @@ impl DebuggerApp {
             };
 
             if let Ok(path) = solution.solve() {
-                image = self.map.map.pathfinding_image(&path, &self.map.properties)
+                image = self
+                    .map_explorer
+                    .world_map
+                    .map
+                    .pathfinding_image(&path, &self.map_explorer.world_map.properties)
             }
         }
 
@@ -324,10 +353,10 @@ impl DebuggerApp {
             image.as_raw(),
         );
 
-        if let Some(texture) = self.map_explorer_texture.as_mut() {
+        if let Some(texture) = self.map_explorer.texture.as_mut() {
             texture.set(color_image, egui::TextureOptions::NEAREST);
         } else {
-            self.map_explorer_texture = Some(ctx.load_texture(
+            self.map_explorer.texture = Some(ctx.load_texture(
                 "map-explorer",
                 color_image,
                 egui::TextureOptions {
@@ -350,9 +379,9 @@ impl eframe::App for DebuggerApp {
                 self.emulator_view(ui);
             }
             DebuggerMode::MapExplorer => {
-                if self.map_explorer_texture_needs_update {
+                if self.map_explorer.texture_dirty {
                     self.update_map_explorer_texture(ui.ctx());
-                    self.map_explorer_texture_needs_update = false;
+                    self.map_explorer.texture_dirty = false;
                 }
                 self.map_explorer_view(ui);
             }
